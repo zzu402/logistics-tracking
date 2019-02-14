@@ -1,0 +1,173 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.htkfood.mapper.slave.UserMapper">
+
+	<resultMap type="com.htkfood.entity.ExpressCompanyEntity" id="companyEntityResult">
+		<result column="expressCompany" property="expressCompany" />
+		<collection property="driverEntities" ofType="com.htkfood.entity.DriverEntity">
+			<result column="driverName" property="driverName" />
+			<result column="driverPhone" property="driverPhone" />
+		</collection>
+	</resultMap>
+
+	<select id="getExpressCompany" resultMap="companyEntityResult">
+		select c.FORGID,--组织id
+		c.FNAME,--组织名称
+		b.FNAME as expressCompany,--物流公司名称
+		d.fcontact as driverName,--联系人
+		d.fmobile as driverPhone--联系人电话
+		from t_BD_Supplier a -- 供应商主表
+		left join
+		t_BD_Supplier_l b on a.FSUPPLIERID=b.FSUPPLIERID -- 供应商中文表
+		LEFT JOIN
+		t_BD_SupplierContact d on d.fsupplierid = a.fsupplierid
+		--供应商联系人表
+		LEFT
+		JOIN T_ORG_ORGANIZATIONS_L c ON a.fuseorgid = c.FORGID -- 组织表
+		where
+		a.FPRIMARYGROUP='102612'
+		and a.fdocumentstatus ='C' --（审核状态）C已审核
+		and
+		a.fforbidstatus = 'A' --（禁用状态）A启用
+		<if test="orgId !=null">
+			and c.FORGID=#{orgId}
+		</if>
+		<if test="keyword !=null">
+			and b.FNAME like #{keyword}
+		</if>
+	</select>
+
+
+	<select id="getStockInfo" resultType="com.htkfood.entity.ErpStockInfo">
+		select d.fname as saler, e.fname as carrier,a.FCARRIAGENO as billNo,
+		f.fname as stocker,g.fname as endPoint,a.F_HTK_LOGAMOUNT as
+		transportationCost,
+		a.F_HTK_SHLXR as receiver,a.F_HTK_LXRDH as receivePhone,a.F_HTK_SHDZ as
+		receiveAddress,
+		a.F_HTK_SJLXR as driver,a.F_HTK_SJDH as driverPhone,CASE WHEN a.F_HTK_TATYPE=1 then
+		'到付'
+		when a.F_HTK_TATYPE=2 then '回单(无需运费)' when a.F_HTK_TATYPE=3 then '自提' END
+		as payMethod,a.F_HTK_cubicnumber as  cub,
+    sum(case  WHEN
+     LEFT (h.FNUMBER, 2) = '91' or LEFT
+		(h.FNUMBER, 2) = '92'
+		then b.FQTY else  0
+    END) as  saleQty,
+     sum(case  WHEN
+     LEFT (h.FNUMBER, 2) != '91' and LEFT
+		(h.FNUMBER, 2) != '92'
+		then b.FQTY else  0
+    END) as  otherQty,a.F_HTK_LogPrice as unitPrice
+		from T_SAL_DELIVERYNOTICE a
+		LEFT  JOIN T_SAL_DELIVERYNOTICEENTRY b ON a.FID = b.FID
+		LEFT  JOIN T_SAL_DELIVERYNOTICEENTRY_F c ON b.FENTRYID = c.FENTRYID
+		LEFT JOIN T_ORG_ORGANIZATIONS_L d on d.FORGID=a.FDELIVERYORGID
+		LEFT JOIN t_BD_Supplier_l e on e.fsupplierid=a.FCARRIERID
+		LEFT JOIN T_ORG_ORGANIZATIONS_L f on f.FORGID=a.FDELIVERYORGID
+		LEFT JOIN T_BD_CUSTOMER_L g on g.FCUSTID=a.FCUSTOMERID
+		LEFT JOIN
+		T_BD_MATERIAL h ON b.FMaterialId = h.FMaterialId
+		WHERE 1=1
+ 		  <if test="billNo !=null">
+			and a.FBILLNO=#{billNo}
+		</if>
+   		 GROUP BY  d.fname,e.fname,a.FCARRIAGENO,f.fname,g.fname,a.F_HTK_LOGAMOUNT
+   			 ,a.F_HTK_SHLXR,a.F_HTK_LXRDH,a.F_HTK_SHDZ,a.F_HTK_SJLXR,a.F_HTK_SJDH,a.F_HTK_TATYPE
+   			 ,F_HTK_cubicnumber,a.F_HTK_LogPrice
+   
+	</select>
+
+	<select id="getDeliveryOrder" resultType="com.htkfood.entity.DeliveryOrderEntity">
+
+		SELECT a.fbillno as deliveryOrder, -- 订单编号
+		a.f_htk_shlxr as receiver,--收货联系人
+		a.f_htk_lxrdh as receiverPhone, -- 收货联系人电话
+		a.f_htk_shdz as	receiveAddress, --收货地址
+		--CONVERT(numeric(10,2),a.f_htk_cubicnumber), --货物方数
+		a.FSALEORGID , --销售组织
+		b.FCUSTID as clientId,--客户id
+		c.FNAME as client,-- 客户名称
+		e.fname ,--业务员名称
+		e.FPHONE as fphone,
+		0 as status,a.fsalesmanid,
+		a.FCARRIAGENO as transportNo
+		FROM T_SAL_DELIVERYNOTICE a --销售出库单主表（2019.1.19改成发货通知单）
+		LEFT JOIN
+		T_BD_CUSTOMER b ON a.FCUSTOMERID = b.FCUSTID -- 客户表
+		inner JOIN
+		T_BD_CUSTOMER_L c on b.fcustid = c.fcustid -- 客户中文表
+		LEFT JOIN
+		T_SEC_USER e on a.F_HTK_QYZR2 = e.fuserid -- 用户表
+		LEFT JOIN
+		T_ORG_ORGANIZATIONS_L f ON a.FSALEORGID = f.FORGID -- 组织表
+		where
+		CONVERT(varchar(10),a.fdate,120) <![CDATA[>=]]>
+		CONVERT(varchar(10),DATEADD(DAY,-1,GETDATE()),120)
+		<if test="orgId !=null">
+			and a.FDELIVERYORGID=#{orgId}
+		</if>
+		<if test="keyword !=null">
+			and (a.fbillno like #{keyword} or c.FNAME like #{keyword}
+			)
+		</if>
+		<if test="deliveryOrders != null and deliveryOrders.size()>0">
+			and a.fbillno not in
+			<foreach collection="deliveryOrders" item="item" open="("
+				close=")" separator=",">
+				#{item.deliveryOrder}
+			</foreach>
+		</if>
+		order by a.fdate desc
+	</select>
+
+	<resultMap type="com.htkfood.entity.UserEntity" id="userEntityResult">
+		<id column="userId" property="userId" />
+		<result column="attenceNo" property="attenceNo" />
+		<result column="name" property="name" />
+		<collection property="userPostVos" ofType="com.htkfood.entity.vo.UserPostVo">
+			<result column="orgId" property="orgId" />
+			<result column="orgName" property="orgName" />
+			<collection property="userRoleVos" ofType="com.htkfood.entity.vo.UserRoleVo">
+				<result column="roleId" property="roleId" />
+				<result column="roleName" property="roleName" />
+			</collection>
+		</collection>
+	</resultMap>
+	<select id="getUserInfoById" parameterType="java.lang.String"
+		resultMap="userEntityResult">
+		select u.fuserid as userId,
+		the.FNUMBER as attenceNo, -- 考勤编号
+		thel.FNAME as name, --员工姓名
+		togl.FORGID as orgId,-- 所属组织id
+		togl.FNAME as orgName, -- 所属组织
+		b.froleid as roleId, -- 角色id
+		tsrl.FNAME as roleName --角色名称
+		from T_SEC_USER u
+		LEFT JOIN T_HR_EMPINFO the on u.flinkobject =
+		the.FPERSONID
+		LEFT JOIN T_HR_EMPINFO_L thel on the.FID = thel.FID
+		LEFT
+		JOIN t_sec_userorg a on u.fuserid= a.fuserid
+		LEFT JOIN
+		T_ORG_ORGANIZATIONS_L togl on togl.FORGID = a.forgid
+		LEFT JOIN
+		t_sec_userrolemap b on a.fentityid = b.fentityid
+		LEFT JOIN t_SEC_role
+		tsr ON b.froleid = tsr.froleid
+		LEFT JOIN T_SEC_ROLE_L tsrl ON
+		tsrl.froleid = tsr.froleid
+		where u.fuserid = #{userId}
+		AND
+		tsr.fforbidstatus ='A'
+		AND tsr.fdocumentstatus = 'C'
+	</select>
+
+	<select id="getEmployee" resultType="com.htkfood.entity.EmployeeEntity">
+		select fname as employeeName,fphone as employeePhone from T_SEC_USER
+		where 1=1 and FFORBIDSTATUS = 'A'
+		<if test="keyword !=null">
+			and fname like #{keyword}
+		</if>
+	</select>
+
+</mapper>

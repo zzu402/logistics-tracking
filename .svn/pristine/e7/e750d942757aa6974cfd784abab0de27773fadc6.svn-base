@@ -1,0 +1,526 @@
+function platformAlert(message, callback) {
+    var alert = jqueryAlert({
+        'content' : message,
+        'modal'   : true,
+        'width'   : '80%',
+        'height'  : 'auto',
+        'buttons' :{
+            '确定' : function(){
+                alert.destroy();
+                if(callback && (typeof callback == "function")) {
+                    callback();
+                }
+            }
+        }
+    });
+}
+
+function platformConfirm(title, message, confirmFun,cancelFun) {
+    var confirm = jqueryAlert({
+        'title'   : title,
+        'content' : message,
+        'modal'   : true,
+        'width'   : '80%',
+        'height'  : 'auto',
+        'buttons' :{
+            '确定' : function(){
+                confirm.destroy();
+                if(confirmFun && (typeof confirmFun == "function")) {
+                    confirmFun();
+                }
+            },
+            '取消' : function(){
+                confirm.destroy();
+                if(cancelFun && (typeof cancelFun == "function")) {
+                    cancelFun();
+                }
+            }
+        }
+    })
+}
+
+function numberLimit(length) {
+    if (window.event.keyCode < 48 || window.event.keyCode > 57) {
+        stopDefault();
+        return;
+    }
+    var value = window.event.currentTarget.value;
+    value = value.substring(0, window.event.currentTarget.selectionStart) + value.substring(window.event.currentTarget.selectionEnd);
+    if (length && value.length >= length) {
+        stopDefault();
+        return;
+    }
+}
+function driverCardIdLimit(length) {
+    if (!(window.event.keyCode == 88 || window.event.keyCode == 120) && !(window.event.keyCode <= 57 && window.event.keyCode >= 48)) {
+        stopDefault();
+        return;
+    }
+    var value = window.event.currentTarget.value;
+    value = value.substring(0, window.event.currentTarget.selectionStart) + value.substring(window.event.currentTarget.selectionEnd);
+    if (length && value.length >= length) {
+        stopDefault();
+        return;
+    }
+}
+
+function floatLimit(length, digit, negativeEnable) {
+    if (negativeEnable == undefined || negativeEnable == null)
+        negativeEnable = true;
+    if ((!negativeEnable || window.event.keyCode != 45) && window.event.keyCode != 46 && (window.event.keyCode < 48 || window.event.keyCode > 57)) {
+        stopDefault();
+        return;
+    }
+    var location = window.event.currentTarget.selectionStart;
+    var value = window.event.currentTarget.value;
+    if (window.event.keyCode == 45) {
+        if (location != 0) {
+            stopDefault();
+            return;
+        }
+    }
+    if (length && value.length >= length) {
+        stopDefault();
+        return;
+    }
+    var index = value.indexOf(".");
+    if (index >= 0) {
+        if (window.event.keyCode == 46) {
+            stopDefault();
+            return;
+        } else {
+            if (location > index) {
+                var dLength = value.substring(index + 1).length;
+                if (dLength >= digit) {
+                    stopDefault();
+                    return;
+                }
+            }
+        }
+    } else {
+        if (window.event.keyCode == 46 && (value.length - location) > digit) {
+            stopDefault();
+            return;
+        }
+    }
+}
+
+function isObjNull(value) {
+    if (value == null || value == undefined)
+        return true;
+    return false;
+}
+
+function isStrBlank(strValue) {
+    if (strValue == null || strValue == undefined || (strValue+"") == '')
+        return true;
+    return false;
+}
+
+function isStrContain(str, subStr) {
+    return str && str.indexOf(subStr) >= 0;
+}
+
+function fillModel(targetObj, obj, name) {
+    for (var propName in obj) {
+        var propValue = obj [propName];
+        if (typeof (propValue) == "function") {
+            continue;
+        } else { // propName为属性名称，propValue为对应属性的值
+            if (isStrBlank(name))
+                targetObj[propName] = propValue;
+            else
+                targetObj[name + '.' + propName] = propValue;
+        }
+    }
+}
+
+/**
+ * 将boolean转为0，1
+ * @param targetObj
+ * @param obj
+ * @param name
+ */
+function fillModelWithoutBoolean(targetObj, obj, name) {
+    for (var propName in obj) {
+        var propValue = obj [propName];
+        if (typeof (propValue) == "function") {
+            continue;
+        } else { // propName为属性名称，propValue为对应属性的值
+            if ((typeof propValue) == "boolean") {
+                if (propValue)
+                    targetObj[name + '.' + propName] = 1;
+                else
+                    targetObj[name + '.' + propName] = 0;
+            } else {
+                targetObj[name + '.' + propName] = propValue;
+            }
+        }
+    }
+}
+
+function uploadFileByBase64(uploadUrl,base64, successCallback, errorCallback) {
+    var blob = dataURItoBlob(base64); // 上一步中的函数
+    var canvas = document.createElement('canvas');
+    var dataURL = canvas.toDataURL('image/jpeg', 0.8);
+    var formData = new FormData(document.forms[0]);
+    formData.append("file", blob, "image.jpg");
+    $.ajax({
+        url: uploadUrl,
+        type: "POST",
+        data: formData,
+        cache: false,
+        /**
+         *必须false才会自动加上正确的Content-Type
+         */
+        contentType: false,
+        /**
+         * 必须false才会避开jQuery对 formdata 的默认处理
+         * XMLHttpRequest会对 formdata 进行正确的处理
+         */
+        processData: false,
+        success: function (data) {
+            if (checkErrorDatas(data, this, errorCallback)) {
+                if (successCallback && (typeof successCallback == "function"))
+                    successCallback(data.path);
+            }
+        },
+        error: function () {
+            platformAlert("文件上传失败！");
+        }
+    });
+}
+
+
+function dataURItoBlob(base64Data) {
+    var byteString;
+    if (base64Data.split(',')[0].indexOf('base64') >= 0)
+        byteString = atob(base64Data.split(',')[1]);
+    else
+        byteString = unescape(base64Data.split(',')[1]);
+    var mimeString = base64Data.split(',')[0].split(':')[1].split(';')[0];
+    var ia = new Uint8Array(byteString.length);
+    for (var i = 0; i < byteString.length; i++) {
+        ia[i] = byteString.charCodeAt(i);
+    }
+    return new Blob([ia], {type:mimeString});
+}
+
+function uploadFile(uploadUrl, fileId, successCallback, errorCallback) {
+    var formData = new FormData();
+    var filesElement = document.getElementById(fileId);
+    var fileCount = filesElement.length;
+    console.log(filesElement.files[0]);
+    formData.append("file", filesElement.files[0]);
+    $.ajax({
+        url: uploadUrl,
+        type: "POST",
+        data: formData,
+        cache: false,
+        /**
+         *必须false才会自动加上正确的Content-Type
+         */
+        contentType: false,
+        /**
+         * 必须false才会避开jQuery对 formdata 的默认处理
+         * XMLHttpRequest会对 formdata 进行正确的处理
+         */
+        processData: false,
+        success: function (data) {
+            if (checkErrorDatas(data, this, errorCallback)) {
+                if (successCallback && (typeof successCallback == "function"))
+                    successCallback(data.path);
+            }
+        },
+        error: function () {
+            platformAlert("文件上传失败！");
+        }
+    });
+}
+
+function toUtf8(str) {
+    var out, i, len, c;
+    out = "";
+    len = str.length;
+    for (i = 0; i < len; i++) {
+        c = str.charCodeAt(i);
+        if ((c >= 0x0001) && (c <= 0x007F)) {
+            out += str.charAt(i);
+        } else if (c > 0x07FF) {
+            out += String.fromCharCode(0xE0 | ((c >> 12) & 0x0F));
+            out += String.fromCharCode(0x80 | ((c >> 6) & 0x3F));
+            out += String.fromCharCode(0x80 | ((c >> 0) & 0x3F));
+        } else {
+            out += String.fromCharCode(0xC0 | ((c >> 6) & 0x1F));
+            out += String.fromCharCode(0x80 | ((c >> 0) & 0x3F));
+        }
+    }
+    return out;
+}
+
+//从 canvas 提取图片 image
+function convertCanvasToImage(canvas) {
+    //新Image对象，可以理解为DOM
+    var image = new Image();
+    // canvas.toDataURL 返回的是一串Base64编码的URL
+    // 指定格式 PNG
+    image.src = canvas.toDataURL("image/png");
+    return image;
+}
+
+// 把image 转换为 canvas对象
+function convertImageToCanvas(image, offsetX, offsetY) {
+    // 创建canvas DOM元素，并设置其宽高和图片一样
+    var canvas = document.createElement("canvas");
+    canvas.width = image.width;
+    canvas.height = image.height;
+    // 坐标(0,0) 表示从此处开始绘制，相当于偏移。
+    canvas.getContext("2d").drawImage(image, offsetX, offsetY);
+    return canvas;
+}
+
+String.prototype.startWith = function (str) {
+    var reg = new RegExp("^" + str);
+    return reg.test(this);
+}
+
+String.prototype.endWith = function (str) {
+    var reg = new RegExp(str + "$");
+    return reg.test(this);
+}
+
+Date.prototype.Format = function (fmt) {
+    var o = {
+        "M+": this.getMonth() + 1, //月份
+        "d+": this.getDate(), //日
+        "h+": this.getHours(), //小时
+        "m+": this.getMinutes(), //分
+        "s+": this.getSeconds(), //秒
+        "q+": Math.floor((this.getMonth() + 3) / 3), //季度
+        "S": this.getMilliseconds() //毫秒
+    };
+    if (/(y+)/.test(fmt)) fmt = fmt.replace(RegExp.$1, (this.getFullYear() + "").substr(4 - RegExp.$1.length));
+    for (var k in o)
+        if (new RegExp("(" + k + ")").test(fmt)) fmt = fmt.replace(RegExp.$1, (RegExp.$1.length == 1) ? (o[k]) : (("00" + o[k]).substr(("" + o[k]).length)));
+    return fmt;
+}
+
+function formToJSON(el) {
+    var raw_data = $(el).serializeArray();
+    var data = {};
+    $.each(raw_data, function (i, v) {
+        data[v.name] = v.value;
+    });
+    return JSON.stringify(data);
+}
+
+function getCacheFromLocalStorage(key) {
+    var cacheStr = localStorage.getItem(key);
+    if (cacheStr)
+        return JSON.parse(cacheStr);
+    return null;
+}
+
+function setCache2LocalStorage(key, value) {
+    if (value)
+        localStorage.setItem(key, JSON.stringify(value));
+    else
+        localStorage.removeItem(key);
+}
+
+function removeCacheFromLocalStorage(key) {
+    localStorage.removeItem(key);
+}
+
+function getCacheFromSessionStorage(key) {
+    var cacheStr = sessionStorage.getItem(key);
+    if (cacheStr)
+        return JSON.parse(cacheStr);
+    return null;
+}
+
+function setCache2SessionStorage(key, value) {
+    if (value)
+        sessionStorage.setItem(key, JSON.stringify(value));
+    else
+        sessionStorage.removeItem(key);
+}
+
+function removeCacheFromSessionStorage(key) {
+    sessionStorage.removeItem(key);
+}
+
+function convertDate2Seconds(time) {
+    return parseInt(time / 1000);
+}
+
+function convertSeconds2Date(seconds) {
+    var time = new Date();
+    time.setTime(seconds);
+    return time;
+}
+
+function appendErrorMsg(targetErrMsg, newErrMsg, split) {
+    if (!arguments[2]) split = '\n';
+    if (!targetErrMsg || targetErrMsg.length <= 0)
+        return newErrMsg;
+    else
+        return targetErrMsg + split + newErrMsg;
+}
+
+/**
+ * 将以分计算的钱转为以元计算的钱
+ * @param srcMoney
+ * @param digit
+ */
+function moneyFen2Yuan(srcMoney, digit) {
+    if (!arguments[1]) {
+        digit = 0;
+    }
+    if (srcMoney && srcMoney > 0) {
+        if (digit < 1)
+            return parseInt(Math.ceil(srcMoney / 100));
+        else if (digit == 1)
+            return parseInt(Math.ceil(srcMoney / 10)) / 10;
+        else
+            return srcMoney / 100;
+    }
+    return srcMoney;
+}
+
+function location2Url(path) {
+    if (path)
+        window.location = path;
+}
+
+function isWeiXin() {
+    var userAgent = window.navigator.userAgent.toLowerCase().match(/MicroMessenger/i);
+    if (userAgent && (userAgent == 'micromessenger')) {
+        return true;
+    } else {
+        return false;
+    }
+}
+
+function imgLoaded() {
+    var element = window.event.currentTarget;
+    if (!element)
+        return;
+    var imgElement = $(element);
+    if (imgElement.height() > imgElement.width()) {
+        imgElement.removeClass("uploadw");
+        imgElement.addClass("uploadh");
+    } else if (imgElement.height() < imgElement.width()) {
+        imgElement.removeClass("uploadh");
+        imgElement.addClass("uploadw");
+    }
+}
+
+function buildQueryStr(params, filterParams) {
+    var paramString = "";
+    if (params) {
+        for (var key in params) {
+            if (filterParams && filterParams[key] == 1)
+                continue;
+            var value = params[key];
+            if (typeof (value) == "function") {
+                continue;
+            } else {
+                if (paramString.length > 0)
+                    paramString = paramString + "&";
+                paramString = paramString + key + "=" + encodeURIComponent(value);
+            }
+        }
+    }
+    return paramString;
+}
+
+function stopDefault() {
+    if (window.event && window.event.preventDefault) {
+        window.event.preventDefault();
+    } else {
+        window.event.returnValue = false;
+    }
+}
+
+function fillVueModel(targetObj, obj, name, single) {
+    if(single && name){
+        Vue.set(targetObj, name, obj);
+    }else{
+        for (var propName in obj) {
+            var propValue = obj [propName];
+            if (typeof (propValue) == "function") {
+                continue;
+            } else { // propName为属性名称，propValue为对应属性的值
+                if (isStrBlank(name))
+                    Vue.set(targetObj, propName,propValue);
+                else
+                    Vue.set(targetObj, (name + '.' + propName),propValue);
+            }
+        }
+    }
+}
+
+/**
+ * 判断是否整数
+ * @param obj
+ * @returns {boolean}
+ */
+function isInteger(obj) {
+    return Math.floor(obj) === obj
+}
+
+/**
+ * 将一个浮点数转成整数
+ * @param obj       浮点数
+ * @param digit     小数点个数
+ * @param round     是否四舍五入
+ * @returns {*}
+ */
+function updateInteger(obj, digit, round) {
+    if(isInteger(obj))
+        return obj * Math.pow(10, digit);
+
+    var objStr  = obj + '';
+    var dotPos = objStr.indexOf('.');
+    var intStr,digitStr;
+    if(dotPos<0){
+        intStr = objStr;
+        digitStr = "";
+    }else{
+        intStr = objStr.substring(0, dotPos);//整数部分
+        digitStr = objStr.substring(dotPos+1);//小数部分
+    }
+    var digitLength = digitStr.length;
+    for(var i=0; i<digit; i++) {
+        if(i<digitLength){
+            intStr = intStr+digitStr.charAt(i);
+        }else{
+            intStr = intStr+"0";
+        }
+    }
+    var objInt = parseInt(intStr);
+    if((digitLength>digit) && round && (parseInt(digitStr.charAt(digit))>=5)){
+        objInt = objInt + 1;
+    }
+    return objInt;
+}
+
+function isPc() {
+    var userAgentInfo = navigator.userAgent.toLowerCase();
+    var Agents = ["android", "iphone",
+        "symbianos", "windows phone",
+        "ipad", "ipod"];
+    var flag = true;
+    for (var v = 0; v < Agents.length; v++) {
+        if (userAgentInfo.indexOf(Agents[v]) > 0) {
+            flag = false;
+            break;
+        }
+    }
+    return flag;
+}
+
+function locationReplace(url){
+    location.replace(url);
+}

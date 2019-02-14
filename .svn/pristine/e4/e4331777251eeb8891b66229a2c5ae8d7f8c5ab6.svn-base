@@ -1,0 +1,191 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>回头客物流跟踪系统</title>
+<link rel="stylesheet" href="../assets/css/bootstrap.css" />
+<link rel="stylesheet" href="../assets/css/css.css" />
+<link rel="stylesheet" href="../assets/css/zpageNav.css" />
+<script src="../assets/js/jquery-1.10.2.js"></script>
+<script src="../assets/js/bootstrap.min.js"></script>
+<script src="../assets/js/httpUtil.js"></script>
+<script src="../assets/js/common.js"></script>
+<script src="../assets/js/vue.js"></script>
+<script src="../assets/js/zpageNav.js"></script>
+<style type="text/css">
+[v-cloak] {
+   display: none !important;
+}
+</style>
+</head>
+<body>
+	<div class="title_right">
+		<strong>报表统计</strong>
+	</div>
+	<div id="app" v-cloak>
+		<div style="width: 85%; margin: auto;">
+			<div style="margin-bottom: 20px; width: 100%">
+		<span>
+		<span>所属组织:</span>
+				<select
+						style="width: 160px; height: 27px;font-size:12px;" @change="searchReport()"
+						 v-model="search.organization">
+						<option v-for="post  in user.userPostVos" :value="post.orgName">{{post.orgName}}</option>
+					</select>
+		
+		<span>承运单位:</span>
+					<input v-model="search.expressCompany" style="width: 120px"
+					type="text" class="span1-1" />  <input style="magin-left: 5px; magin-right: 5px" type="button"
+					@click="searchReport()" value="查询" /><input type="button"  style="margin-left:2px;"
+					@click="reset()" value="重置" /></span>
+					
+					<span
+					style="float: right; magrin-left: 5px">
+					<input @click="exprortReport()"
+					type="button" value="导出明细" style="margin-left:2px;" /></span>
+			</div>
+			<table class="table table-bordered" id="mtable">
+				<tr>
+					<td align="center" nowrap="nowrap" bgcolor="#f1f1f1">选框</td>
+					<td align="center" nowrap="nowrap" bgcolor="#f1f1f1">承运单位</td>
+					<td align="center" nowrap="nowrap" bgcolor="#f1f1f1">在厂时间均值</td>
+					<td align="center" nowrap="nowrap" bgcolor="#f1f1f1">运输时间均值</td>
+					<td align="center" nowrap="nowrap" bgcolor="#f1f1f1">评价均值</td>
+					<td align="center" nowrap="nowrap" bgcolor="#f1f1f1">操作</td>
+				</tr>
+				<tr v-for="(report,index) in reportList">
+					<td align="center"><input type="checkbox" name="check"
+						:id="index" /></td>
+					<td align="center">{{report.expressCompany}}</td>
+					<td align="center">{{report.inFactoryTime | time}} </td>
+					<td align="center">{{report.transportTime | time}} </td>
+					<td align="center">{{report.commentScore}}</td>
+					<td align="center"><a @click="query(index)">查看明细</a></td>
+				</tr>
+			</table>
+			<div align="center">
+				<zpagenav v-bind:page="page" v-bind:page-size="pageSize"
+					v-bind:total="total" v-bind:max-page="maxPage"
+					v-on:pagehandler="pageHandler"> <zpagenav>
+			</div>
+		</div>
+	</div>
+</body>
+<script>
+	$(function() {	
+		var app = new Vue(
+				{
+					el : '#app',
+					filters : {
+						time:function(m){
+							var secondTime = parseInt(m);// 秒
+					        var minuteTime = 0;// 分
+					        var hourTime = 0;// 小时
+					        if(secondTime > 60) {//如果秒数大于60，将秒数转换成整数
+					            //获取分钟，除以60取整数，得到整数分钟
+					            minuteTime = parseInt(secondTime / 60);
+					            //获取秒数，秒数取佘，得到整数秒数
+					            secondTime = parseInt(secondTime % 60);
+					            //如果分钟大于60，将分钟转换成小时
+					            if(minuteTime > 60) {
+					                //获取小时，获取分钟除以60，得到整数小时
+					                hourTime = parseInt(minuteTime / 60);
+					                //获取小时后取佘的分，获取分钟除以60取佘的分
+					                minuteTime = parseInt(minuteTime % 60);
+					            }
+					        }
+					        var result = "" + parseInt(secondTime) + "秒";
+				 
+					        if(minuteTime > 0) {
+					        	result = "" + parseInt(minuteTime) + "分" + result;
+					        }
+					        if(hourTime > 0) {
+					        	result = "" + parseInt(hourTime) + "小时" + result;
+					        }
+					        return result;
+
+							
+						}
+					},
+					watch:{
+						
+					},
+					data : {
+						search : {
+							expressCompany : "",
+							organization:""
+						},
+						page : 1, //显示的是哪一页
+						pageSize : 15, //每一页显示的数据条数
+						total : 0, //记录总数
+						maxPage : 1, //最大页数
+						index : {},
+						reportList:[],
+						user:{}
+					},
+					methods : {
+						exprortReport:function(){
+							var params="";
+							
+							if(this.search.expressCompany.length>0){
+								params="expressCompany="+this.search.expressCompany;
+							}
+							var url="/common/exportReport";
+							if(params.length>0){
+								url=url+"?"+params;
+							}
+							location.href=url;
+						},
+						searchReport : function() {
+							app.pageHandler(1);
+						},
+						reset : function() {
+							app.search.expressCompany = "";
+							app.pageHandler(1);
+						},
+						query:function(index){
+							var url = "reportDetail?logisticsNo="
+									+ app.reportList[index].logisticsNo;
+							window.open(url, "_self");
+						},
+						pageHandler : function(page) {
+							this.page = page;
+							var formData = {
+								"currentPage" : page,
+								"pageSize" : this.pageSize,
+								"expressCompany" : this.search.expressCompany,
+								"organization":this.search.organization
+							}
+							jsonPost4Json(
+									"/report/getReportList",
+									formData,
+									function(data, httpOptions, status) {
+										if (checkErrorDatas(data, httpOptions)) {
+											if (data.reportList) {
+												app.reportList = data.reportList;
+												app.total = data.totalNum;
+												app.maxPage = Math
+														.ceil(app.total
+																/ app.pageSize);
+											}
+										}
+									});
+							}
+						},
+					created : function() {
+						formPost4Json("/user/getUserInfo", null, function(data,
+								httpOptions, status) {
+							if (checkErrorDatas(data, httpOptions)) {
+								if (data.user) {
+									app.user = data.user;
+									app.search.organization=app.user.userPostVos[0].orgName;
+									app.pageHandler(1);//created  表示页面加载完毕，立即执行
+								}
+							}
+						});
+					}
+				});
+		setCache2SessionStorage("currentUrl","/report");
+	});
+</script>
+</html>

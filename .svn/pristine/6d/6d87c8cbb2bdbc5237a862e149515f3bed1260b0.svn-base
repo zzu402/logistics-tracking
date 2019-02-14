@@ -1,0 +1,589 @@
+<html>
+<head>
+<meta charset="utf-8">
+<title>产品检验</title>
+
+<script language="javascript" type="text/javascript"
+	src="../assets/My97DatePicker/WdatePicker.js"></script>
+<script src="../assets/js/jquery-1.10.2.js"></script>
+<script src="../assets/js/bootstrap.min.js"></script>
+<script src="../assets/js/httpUtil.js"></script>
+<script src="../assets/js/common.js"></script>
+<script src="../assets/js/vue.js"></script>
+<style>
+.container {
+	position: absolute !important;
+	position: relative;
+	height: 100%;
+	bottom: 0px;
+	width: 100%;
+	padding: 0px;
+}
+
+#left {
+	float: left;
+	width: 340px;
+	background: #3a4b6c;
+	overflow-x: hidden;
+	overflow-y: auto;
+	height: 100%;
+	position: relative;
+}
+
+#right {
+	background: #f3f7fd;
+	overflow-y: hidden;
+	overflow-x: hidden;
+	height: 100%;
+	position: relative;
+}
+
+#title {
+	background-color: rgba(0, 0, 0, 0.2);
+	width: 100%;
+	height: 80px;
+}
+
+#img {
+	width: 32px;
+	height: 28px;
+	margin-top: 20px;
+	margin-left: 10px;
+}
+
+.timeText {
+	font-size: 24px;
+	color: #ffffff;
+	line-height: 40PX;
+	margin: 10px;
+}
+
+.inputText {
+	width: 92%;
+	margin: 10px;
+	height: 34px;
+	font-size: 18px;
+}
+
+#right-title {
+	background: #fff;
+	width: 100%;
+	height: 80px;
+}
+
+.box-img1 {
+	height: 350px;
+	width: 525px;
+	margin-right: 120px;
+}
+
+.cover-img1 {
+	width: 100%;
+	height: 100%;
+	background-image: url(./img/1.jpg);
+	background-size: cover;
+	background-position: 50%;
+}
+
+.box-img2 {
+	height: 350px;
+	width: 525px;
+}
+
+.cover-img2 {
+	width: 100%;
+	height: 100%;
+	background-image: url(./img/2.jpg);
+	background-size: cover;
+	background-position: 50%;
+}
+
+.box-img3 {
+	height: 350px;
+	width: 525px;
+	margin-right: 120px;
+}
+
+.cover-img3 {
+	width: 100%;
+	height: 100%;
+	background-image: url(./img/3.jpg);
+	background-size: cover;
+	background-position: 50%;
+}
+
+ul, li {
+	list-style: none;
+}
+
+.shutter-btn {
+	
+}
+
+.shutter-btn li {
+	position: absolute;
+	z-index: 2;
+	top: 50%;
+	width: 49px;
+	height: 49px;
+	margin-top: -25px;
+	cursor: pointer;
+}
+
+.shutter-btn li.prev {
+	left: 20px;
+	background: url(../assets/img/shutter_prevBtn.png) no-repeat 0 -49px;
+}
+
+.shutter-btn li.next {
+	right: 20px;
+	background: url(../assets/img/shutter_nextBtn.png) no-repeat 0 -49px;
+}
+
+.box-img4 {
+	height: 350px;
+	width: 525px;
+}
+
+.cover-img4 {
+	width: 100%;
+	height: 100%;
+	background-image: url(./img/4.jpg);
+	background-size: cover;
+	background-position: 50%;
+}
+
+#img-container {
+	margin-top: 20px;
+	text-align: center;
+}
+
+[v-cloak] {
+	display: none !important;
+}
+</style>
+
+</head>
+
+<body style="margin: 0px;">
+	<div class="container" id="app" v-cloak>
+		<div id="left">
+			<div id="title">
+				<img src="../assets/img/cpjy.png" id="img" /> <span
+					style="font-size: 34px; color: #ffffff; line-height: 80PX; margin-left: 40px">产品检验</span>
+			</div>
+			<div>
+				<div>
+					<span class="timeText"> 开始时间 </span> <input class="Wdate"
+						type="text" style="width: 200px; height: 30px; font-size: 16px;"
+						v-model="search.beginTime"
+						onClick="WdatePicker({el:this,dateFmt:'yyyy-MM-dd',onpicked:function(dp){app.search.beginTime = dp.cal.getNewDateStr()},oncleared:function(dp){app.search.beginTime='';}})">
+				</div>
+				<div>
+					<span class="timeText"> 结束时间 </span> <input class="Wdate"
+						type="text" style="width: 200px; height: 30px; font-size: 16px;"
+						v-model="search.endTime"
+						onClick="WdatePicker({el:this,dateFmt:'yyyy-MM-dd',onpicked:function(dp){app.search.endTime = dp.cal.getNewDateStr()},oncleared:function(dp){app.search.endTime='';}})">
+				</div>
+				<div>
+					<input type="text" class="inputText" v-model="search.keyword"
+						placeholder="请输入车间/人员名称"></input>
+				</div>
+				<div>
+					<span class="timeText"> 生产公司 </span> <select
+						v-model="search.companyType"
+						style="width: 200px; height: 30px; font-size: 16px; margin-top: 12px;">
+						<option value="-1">请选择</option>
+						<option value="0">福建回头客食品有限公司</option>
+						<option value="1">湖北回头客食品有限公司</option>
+						<option value="2">吉林回头客食品有限公司</option>
+						<option value="3">山东回头客食品有限公司</option>
+						<option value="4">四川回头客食品有限公司</option>
+					</select>
+				</div>
+
+				<div>
+					<button class="inputText" @click="searchPhoto()">搜索</button>
+				</div>
+
+				<div>
+					<button id="btn" class="inputText" @click="stopOrstart()">停止播放</button>
+				</div>
+			</div>
+		</div>
+		<div id="right">
+
+			<div id="right-title">
+				<span
+					style="font-size: 30px; color: #000; line-height: 80PX; margin-left: 40px">时间:{{currentImg.createTime
+					| time}}</span> <span
+					style="font-size: 30px; color: #000; line-height: 80PX; margin-left: 220px">上传:{{currentImg.org}}{{currentImg.productLine}}-{{currentImg.name}}</span>
+			</div>
+
+			<div id="img-container">
+				<ul class="shutter-btn">
+					<li class="prev" @click="prevImg()"></li>
+					<li class="next" @click="nextImg()"></li>
+				</ul>
+
+				<div>
+					<div style="display: -moz-inline-box; display: inline-block;">
+						<div class="box-img1">
+							<img class="cover-img1" id="p1"
+								@click="showBigImg('#outerdiv', '#innerdiv', '#bigimg','p1')"></img>
+						</div>
+						<span
+							style="font-size: 34px; color: #000; line-height: 80PX; margin-left: -40px">正面</span>
+					</div>
+					<div style="display: -moz-inline-box; display: inline-block;">
+						<div class="box-img2">
+							<img class="cover-img2" id="p2"
+								@click="showBigImg('#outerdiv', '#innerdiv', '#bigimg','p2')"></img>
+						</div>
+						<span
+							style="font-size: 34px; color: #000; line-height: 80PX; margin-left: 40px">反面</span>
+					</div>
+				</div>
+				<div>
+					<div style="display: -moz-inline-box; display: inline-block;">
+						<div class="box-img3">
+							<img class="cover-img3" id="p3"
+								@click="showBigImg('#outerdiv', '#innerdiv', '#bigimg','p3')"></img>
+						</div>
+						<span
+							style="font-size: 34px; color: #000; line-height: 80PX; margin-left: -40px">包装</span>
+					</div>
+					<div style="display: -moz-inline-box; display: inline-block;">
+						<div class="box-img4">
+							<img class="cover-img4" id="p4"
+								@click="showBigImg('#outerdiv', '#innerdiv', '#bigimg','p4')"></img>
+						</div>
+						<span
+							style="font-size: 34px; color: #000; line-height: 80PX; margin-left: 40px">生产线</span>
+					</div>
+
+				</div>
+			</div>
+		</div>
+		<div id="outerdiv"
+			style="position: fixed; top: 0; left: 0; background: rgba(0, 0, 0, 0.7); z-index: 2; width: 100%; height: 100%; display: none;">
+			<div id="innerdiv" style="position: absolute;">
+				<img id="bigimg" style="border: 5px solid #fff;" src="" />
+			</div>
+		</div>
+
+	</div>
+</body>
+<script>
+	var app = null;
+	var flag = null;
+	var getDataFlag=null;
+	var isStart = true;
+	var isSearch=false;
+	var lastImg=null;
+	var isPrevPage=false;
+	$(function() {
+		app = new Vue({
+			el : '#app',
+			filters : {
+				time : function(value) {
+					if(!value)
+						return "";
+					
+					var date = new Date(value);//时间戳为10位需
+					var Y = date.getFullYear() + '-';
+					var M = (date.getMonth() + 1 < 10 ? '0'
+							+ (date.getMonth() + 1) : date.getMonth() + 1)
+							+ '-';
+					var D = date.getDate() + ' ';
+					var h = dFomate(date.getHours()) + ':';
+					var m = dFomate(date.getMinutes()) + ':';
+					var s = dFomate(date.getSeconds());
+					return Y + M + D + h + m + s;
+
+				}
+			},
+			data : {
+				search : {
+					keyword : "",
+					beginTime : "",
+					endTime : "",
+					companyType : -1
+				},
+				photos : [],
+				img_location : 0,
+				currentImg : {
+					createTime : "",
+					name : "",
+					dept : "",
+					org : "",
+					productLine : "",
+					img1 : ""
+				},
+				currentPage:1,
+				pageSize:50
+			},
+			methods : {
+				showBigImg:function(outerdiv, innerdiv, bigimg,id){
+					  var url =document.getElementById(id).style.backgroundImage;
+					  var src=url.split("(")[1].split(")")[0];
+					  src=src.substring(1,src.length-1);
+					  console.log(src);
+				        $(bigimg).attr("src", src);//设置#bigimg元素的src属性  
+				      
+				            /*获取当前点击图片的真实大小，并显示弹出层及大图*/  
+				        $("<img/>").attr("src", src).load(function(){  
+				            var windowW = $(window).width();//获取当前窗口宽度  
+				            var windowH = $(window).height();//获取当前窗口高度  
+				            var realWidth = this.width;//获取图片真实宽度  
+				            var realHeight = this.height;//获取图片真实高度  
+				            var imgWidth, imgHeight;  
+				            var scale = 0.8;//缩放尺寸，当图片真实宽度和高度大于窗口宽度和高度时进行缩放  
+				              
+				            if(realHeight>windowH*scale) {//判断图片高度  
+				                imgHeight = windowH*scale;//如大于窗口高度，图片高度进行缩放  
+				                imgWidth = imgHeight/realHeight*realWidth;//等比例缩放宽度  
+				                if(imgWidth>windowW*scale) {//如宽度扔大于窗口宽度  
+				                    imgWidth = windowW*scale;//再对宽度进行缩放  
+				                }  
+				            } else if(realWidth>windowW*scale) {//如图片高度合适，判断图片宽度  
+				                imgWidth = windowW*scale;//如大于窗口宽度，图片宽度进行缩放  
+				                            imgHeight = imgWidth/realWidth*realHeight;//等比例缩放高度  
+				            } else {//如果图片真实高度和宽度都符合要求，高宽不变  
+				                imgWidth = realWidth;  
+				                imgHeight = realHeight;  
+				            }  
+				                    $(bigimg).css("width",imgWidth);//以最终的宽度对图片缩放  
+				              
+				            var w = (windowW-imgWidth)/2;//计算图片与窗口左边距  
+				            var h = (windowH-imgHeight)/2;//计算图片与窗口上边距  
+				            $(innerdiv).css({"top":h, "left":w});//设置#innerdiv的top和left属性  
+				            $(outerdiv).fadeIn("fast");//淡入显示#outerdiv及.pimg  
+				        });  
+				          
+				        $(outerdiv).click(function(){//再次点击淡出消失弹出层  
+				            $(this).fadeOut("fast");  
+				        });  
+					
+					
+				},
+				
+				prevImg : function() {
+					app.img_location=app.img_location-2;
+					if(app.img_location<0){
+						app.currentPage=app.currentPage-2;
+						if(app.currentPage<1){
+							alert("到首页了...");
+							app.currentPage=1;
+							return;
+						}
+						app.img_location=app.pageSize;
+						isPrevPage=true;
+					}
+						
+						app.showImg(); 
+				 	/* var index = app.img_location-2;
+					if(index<0)
+						index=0;
+					app.currentImg = app.photos[index % app.photos.length];
+					var img1 = app.currentImg.img1.substring(6,
+							app.currentImg.img1.length);
+					var img2 = app.currentImg.img2.substring(6,
+							app.currentImg.img2.length);
+					var img3 = app.currentImg.img3.substring(6,
+							app.currentImg.img3.length);
+					var img4 = app.currentImg.img4.substring(6,
+							app.currentImg.img4.length);
+					$(".cover-img1").css("background-image",
+							"url(" + img1 + ")");
+					$(".cover-img2").css("background-image",
+							"url(" + img2 + ")");
+					$(".cover-img3").css("background-image",
+							"url(" + img3 + ")");
+					$(".cover-img4").css("background-image",
+							"url(" + img4 + ")"); 
+ */
+				},
+				nextImg : function() {
+					app.showImg();
+					
+					/* app.img_location++;
+					if(index>=app.photos.length)
+						index=app.photos.length-1;
+					app.currentImg = app.photos[index % app.photos.length];
+					var img1 = app.currentImg.img1.substring(6,
+							app.currentImg.img1.length);
+					var img2 = app.currentImg.img2.substring(6,
+							app.currentImg.img2.length);
+					var img3 = app.currentImg.img3.substring(6,
+							app.currentImg.img3.length);
+					var img4 = app.currentImg.img4.substring(6,
+							app.currentImg.img4.length);
+					$(".cover-img1").css("background-image",
+							"url(" + img1 + ")");
+					$(".cover-img2").css("background-image",
+							"url(" + img2 + ")");
+					$(".cover-img3").css("background-image",
+							"url(" + img3 + ")");
+					$(".cover-img4").css("background-image",
+							"url(" + img4 + ")"); */
+
+				},
+				searchPhoto:function(){
+					app.currentPage=1;
+					isSearch=true;
+					app.getPhotos();
+					
+				},
+				
+				getPhotos : function() {
+					var formData = {
+						"currentPage" : this.currentPage,
+						"pageSize" : this.pageSize,
+						"keyword" : $.trim(this.search.keyword),
+						"beginTime" : getTimeStamp(this.search.beginTime),
+						"endTime" : getTimeStamp(this.search.endTime),
+						"companyType" : this.search.companyType,
+					}
+					jsonPost4Json("/productLinePhoto/getPhotos", formData,
+							function(data, httpOptions, status) {
+								if (checkErrorDatas(data, httpOptions)) {
+									isStart = true;
+									var total=data.total;
+									if( Math.ceil(total/app.pageSize)<app.currentPage&&!isSearch){
+										app.currentPage=1;
+										app.getPhotos();
+										return;
+									}
+									
+									if (data.photos.length > 0) {
+										app.currentPage++;
+										clearInterval(flag);
+										clearInterval(getDataFlag);
+										if(isPrevPage){
+											app.img_location=app.pageSize-1;
+										}else{
+											app.img_location = 0;
+										}
+										app.photos = data.photos;
+										app.showImg();
+										flag = setInterval("app.showImg()",
+												5000);
+										getDataFlag=setInterval("getData()",
+												60000);
+									}else if(isSearch){ //如果是搜索没信息，就提示没信息
+										alert("您搜索的条件没有任何照片信息");
+										clearInterval(flag);
+										clearInterval(getDataFlag);
+										app.currentImg.createTime="";
+										app.currentImg.name="";
+										app.currentImg.dept="";
+										app.currentImg.org="";
+										app.currentImg.productLine="";
+										$(".cover-img1").css("background-image",
+												"url( )");
+										$(".cover-img2").css("background-image",
+												"url()");
+										$(".cover-img3").css("background-image",
+												"url()");
+										$(".cover-img4").css("background-image",
+												"url()");
+									}
+									isSearch=false;
+									isPrevPage=false;
+								}
+							});
+
+				},
+				stopOrstart : function() {
+					if (isStart) {
+						clearInterval(flag);
+						$("#btn").text('循环播放');
+						isStart = !isStart;
+					} else {
+						flag = setInterval("app.showImg()", 5000);
+						$("#btn").text('停止播放');
+						isStart = !isStart;
+					}
+
+				},
+				showImg : function() {
+					// $("#img-container").slideToggle(3000);
+					if(app.img_location==app.pageSize){//如果到头了，就说明这个集合到头了，要重新找下
+						app.getPhotos();
+					    return;
+					}
+					app.currentImg = app.photos[app.img_location
+							% app.photos.length];
+					var img1 = app.currentImg.img1.substring(6,
+							app.currentImg.img1.length);
+					var img2 = app.currentImg.img2.substring(6,
+							app.currentImg.img2.length);
+					var img3 = app.currentImg.img3.substring(6,
+							app.currentImg.img3.length);
+					var img4 = app.currentImg.img4.substring(6,
+							app.currentImg.img4.length);
+					$(".cover-img1").css("background-image",
+							"url(" + img1 + ")");
+					$(".cover-img2").css("background-image",
+							"url(" + img2 + ")");
+					$(".cover-img3").css("background-image",
+							"url(" + img3 + ")");
+					$(".cover-img4").css("background-image",
+							"url(" + img4 + ")");
+					// $("#img-container").slideToggle(3000);
+					app.img_location++;
+				}
+			},
+			created : function() {
+				this.getPhotos();
+			}
+		});
+
+	});
+
+	function getData(){	
+		var formData = {
+				"currentPage" : 1,
+				"pageSize" : 1,
+				"keyword" : $.trim(app.search.keyword),
+				"beginTime" : getTimeStamp(app.search.beginTime),
+				"endTime" : getTimeStamp(app.search.endTime),
+				"companyType" : app.search.companyType,
+
+			}
+			jsonPost4Json("/productLinePhoto/getPhotos", formData,
+					function(data, httpOptions, status) { 
+						if (checkErrorDatas(data, httpOptions)) {//判断是否有最新的照片
+							if (data.photos.length > 0) {
+								if(!lastImg){
+									lastImg=data.photos[0];
+								}else{
+									if(lastImg.createTime<data.photos[0].createTime){
+										lastImg=data.photos[0];
+										app.currentPage=1;
+										app.getPhotos();
+									}
+								}
+							}
+						}
+						
+					});
+		
+	}
+	
+	function dFomate(value) {
+		if (value >= 10)
+			return value;
+		return '0' + value;
+	}
+	function getTimeStamp(date) {
+		if (date == "" || date == null)
+			return 0;
+		date = date + " 00:00:00";
+		return new Date(date).getTime() / 1000;
+	}
+</script>
+
+
+</html>

@@ -1,0 +1,535 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<meta name="viewport"
+	content="initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>客户评价</title>
+<link rel="stylesheet" href="./assets/comment/css/comment.css"
+	type="text/css">
+<script src="../assets/js/jquery-1.10.2.js"></script>
+<script src="./assets/comment/js/jquery.min.js"></script>
+<script src="./assets/comment/js/jquery.raty.js" type="text/javascript"></script>
+<script src="../assets/js/httpUtil.js"></script>
+<script src="../assets/js/common.js"></script>
+<script src="../assets/js/exif.js"></script>
+<script src="../assets/js/utils.js"></script>
+</head>
+<body>
+	<header>
+		<span> 客户评价</span>
+	</header>
+	<div id="unfinish">
+		<div class="contaniner fixed-cont">
+			<section class="assess">
+				<p>
+					<textarea id="comments" rows="7" placeholder="请写下对本次运输评价"></textarea>
+				</p>
+				<div>
+					<img
+						style="width: 30px; height: 30px; margin-left: 10px; margin-right: 10px; margin-top: -35px; float: right;"
+						src="../assets/img/camera.png" onclick="trigImg()">
+				</div>
+
+			</section>
+
+			<section class="assess">
+				<div>
+					<input style="display: none;" type="file" id="img1"
+						accept="image/*" capture="camera" onchange="uploadImg(this.id)">
+					<input style="display: none;" id="img2" type="file"
+						accept="image/*" capture="camera" onchange="uploadImg(this.id)">
+					<input style="display: none;" id="img3" type="file"
+						accept="image/*" capture="camera" onchange="uploadImg(this.id)">
+					<input style="display: none;" id="img4" type="file"
+						accept="image/*" capture="camera" onchange="uploadImg(this.id)">
+					<input style="display: none;" id="img5" type="file"
+						accept="image/*" capture="camera" onchange="uploadImg(this.id)">
+					<input style="display: none;" id="img6" type="file"
+						accept="image/*" capture="camera" onchange="uploadImg(this.id)">
+				</div>
+			</section>
+
+			<section class="main">
+				<div class="main-wrap">
+					<span class="revtit">物流时效:</span>
+					<div class="mydiv">
+						<div id="star1" style="cursor: pointer; width: 200px;">
+							<img src="./assets/comment/img/star-off-big.png" alt="1"
+								title="1">&nbsp;<img
+								src="./assets/comment/img/star-off-big.png" alt="2" title="2">&nbsp;<img
+								src="./assets/comment/img/star-off-big.png" alt="3" title="3">&nbsp;<img
+								src="./assets/comment/img/star-off-big.png" alt="4" title="4">&nbsp;<img
+								src="./assets/comment/img/star-off-big.png" alt="5" title="5">
+						</div>
+					</div>
+				</div>
+
+				<div class="main-wrap">
+					<span class="revtit">包装完整:</span>
+					<div class="mydiv">
+						<div id="star2" style="cursor: pointer; width: 200px;">
+							<img src="./assets/comment/img/star-off-big.png" alt="1"
+								title="1">&nbsp;<img
+								src="./assets/comment/img/star-off-big.png" alt="2" title="2">&nbsp;<img
+								src="./assets/comment/img/star-off-big.png" alt="3" title="3">&nbsp;<img
+								src="./assets/comment/img/star-off-big.png" alt="4" title="4">&nbsp;<img
+								src="./assets/comment/img/star-off-big.png" alt="5" title="5">
+						</div>
+					</div>
+				</div>
+
+				<div class="main-wrap">
+					<span class="revtit">司机态度:</span>
+					<div class="mydiv">
+						<div id="star3" style="cursor: pointer; width: 200px;">
+							<img src="./assets/comment/img/star-off-big.png" alt="1"
+								title="1">&nbsp;<img
+								src="./assets/comment/img/star-off-big.png" alt="2" title="2">&nbsp;<img
+								src="./assets/comment/img/star-off-big.png" alt="3" title="3">&nbsp;<img
+								src="./assets/comment/img/star-off-big.png" alt="4" title="4">&nbsp;<img
+								src="./assets/comment/img/star-off-big.png" alt="5" title="5">
+						</div>
+					</div>
+				</div>
+
+			</section>
+			<div>
+				<img style="width: 27%; height: 150px; margin: 10px; display: none;"
+					id="pre1" onclick="trigImg('img1')"> <img
+					style="width: 27%; height: 150px; margin: 10px; display: none;"
+					id="pre2" onclick="trigImg('img2')"> <img
+					style="width: 27%; height: 150px; margin: 10px; display: none;"
+					id="pre3" onclick="trigImg('img3')">
+
+			</div>
+			<div>
+				<img style="width: 27%; height: 150px; margin: 10px; display: none;"
+					id="pre4" onclick="trigImg('img4')"> <img
+					style="width: 27%; height: 150px; margin: 10px; display: none;"
+					id="pre5" onclick="trigImg('img5')"> <img
+					style="width: 27%; height: 150px; margin: 10px; display: none;"
+					id="pre6" onclick="trigImg('img6')">
+
+			</div>
+		</div>
+		<footer class="assess-footer fixed-footer ">
+			<input type="button" onclick="submitComment()" value="发表评价">
+		</footer>
+	</div>
+	<div id="finished" style="display: none">
+		<div class="contaniner fixed-cont">
+			<section class="assess">
+				<p>
+					<textarea id="submitComment" rows="7"
+						style="background-color: #ffffff" disabled="disabled"></textarea>
+				</p>
+			</section>
+			<section class="main">
+				<div class="main-wrap">
+					<span class="revtit">物流时效:</span>
+					<div class="mydiv">
+						<div style="cursor: pointer; width: 200px;">
+							<img id="wlsx1" src="./assets/comment/img/star-on-big.png"
+								alt="1" title="1">&nbsp;<img id="wlsx2"
+								src="./assets/comment/img/star-on-big.png" alt="2" title="2">&nbsp;<img
+								id="wlsx3" src="./assets/comment/img/star-on-big.png" alt="3"
+								title="3">&nbsp;<img id="wlsx4"
+								src="./assets/comment/img/star-on-big.png" alt="4" title="4">&nbsp;<img
+								id="wlsx5" src="./assets/comment/img/star-on-big.png" alt="5"
+								title="5">
+						</div>
+					</div>
+				</div>
+
+				<div class="main-wrap">
+					<span class="revtit">包装完整:</span>
+					<div class="mydiv">
+						<div style="cursor: pointer; width: 200px;">
+							<img id="bzwz1" src="./assets/comment/img/star-on-big.png"
+								alt="1" title="1">&nbsp;<img id="bzwz2"
+								src="./assets/comment/img/star-on-big.png" alt="2" title="2">&nbsp;<img
+								id="bzwz3" src="./assets/comment/img/star-on-big.png" alt="3"
+								title="3">&nbsp;<img id="bzwz4"
+								src="./assets/comment/img/star-on-big.png" alt="4" title="4">&nbsp;<img
+								id="bzwz5" src="./assets/comment/img/star-on-big.png" alt="5"
+								title="5">
+						</div>
+					</div>
+				</div>
+
+				<div class="main-wrap">
+					<span class="revtit">司机态度:</span>
+					<div class="mydiv">
+						<div style="cursor: pointer; width: 200px;">
+							<img id="sjtd1" src="./assets/comment/img/star-on-big.png"
+								alt="1" title="1">&nbsp;<img id="sjtd2"
+								src="./assets/comment/img/star-on-big.png" alt="2" title="2">&nbsp;<img
+								id="sjtd3" src="./assets/comment/img/star-on-big.png" alt="3"
+								title="3">&nbsp;<img id="sjtd4"
+								src="./assets/comment/img/star-on-big.png" alt="4" title="4">&nbsp;<img
+								id="sjtd5" src="./assets/comment/img/star-on-big.png" alt="5"
+								title="5">
+						</div>
+					</div>
+				</div>
+				<div>
+					<img
+						style="width: 27%; height: 150px; margin: 10px; display: none;"
+						id="p1"> <img
+						style="width: 27%; height: 150px; margin: 10px; display: none;"
+						id="p2"> <img
+						style="width: 27%; height: 150px; margin: 10px; display: none;"
+						id="p3">
+
+				</div>
+				<div>
+					<img
+						style="width: 27%; height: 150px; margin: 10px; display: none;"
+						id="p4"> <img
+						style="width: 27%; height: 150px; margin: 10px; display: none;"
+						id="p5"> <img
+						style="width: 27%; height: 150px; margin: 10px; display: none;"
+						id="p6">
+
+				</div>
+
+
+			</section>
+		</div>
+		<footer class="assess-footer fixed-footer ">
+	</div>
+</body>
+<script type="text/javascript">
+	var imgNum = 0;
+	var result1 = 0;
+	var result2 = 0;
+	var result3 = 0;
+
+	var pre1Path = null;
+	var pre2Path = null;
+	var pre3Path = null;
+	var pre4Path = null;
+	var pre5Path = null;
+	var pre6Path = null;
+	rat('star1', '', 1);
+	rat('star2', '', 2);
+	rat('star3', '', 3);
+	function rat(star, result, m) {
+		star = '#' + star;
+		result = '#' + result;
+		$(result).hide();//将结果DIV隐藏
+		$(star).raty({
+			hints : [ '1', '2', '3', '4', '5' ],
+			number : 5,
+			path : "../assets/comment/img",
+			starOff : 'star-off-big.png',
+			starOn : 'star-on-big.png',
+			size : 30,
+			start : 3,
+			showHalf : true,
+			click : function(score, evt) {
+				if (m == 1) {
+					result1 = score;
+				} else if (m == 2) {
+					result2 = score;
+				} else if (m == 3) {
+					result3 = score;
+				}
+			}
+		});
+	}
+	function trigImg(inputId) {
+		if (inputId) {
+			$("#" + inputId).trigger("click");
+			return;
+		}
+		if (imgNum == 0) {
+			$("#img1").trigger("click");
+			imgNum = imgNum + 1;
+		} else if (imgNum == 1) {
+			$("#img2").trigger("click");
+			imgNum = imgNum + 1;
+		} else if (imgNum == 2) {
+			$("#img3").trigger("click");
+			imgNum = imgNum + 1;
+		} else if (imgNum == 3) {
+			$("#img4").trigger("click");
+			imgNum = imgNum + 1;
+		} else if (imgNum == 4) {
+			$("#img5").trigger("click");
+			imgNum = imgNum + 1;
+		} else if (imgNum == 5) {
+			$("#img6").trigger("click");
+			imgNum = imgNum + 1;
+		} else if (imgNum > 5) {
+			alert("最多支持6张图片")
+		}
+
+	}
+
+	//对图片旋转处理 added by lzk
+	function rotateImg(img, direction, canvas) {
+		//alert(img);
+		//最小与最大旋转方向，图片旋转4次后回到原方向
+		var min_step = 0;
+		var max_step = 3;
+		//var img = document.getElementById(pid);
+		if (img == null)
+			return;
+		//img的高度和宽度不能在img元素隐藏后获取，否则会出错
+		var height = img.height;
+		var width = img.width;
+		//var step = img.getAttribute('step');
+		var step = 2;
+		if (step == null) {
+			step = min_step;
+		}
+		if (direction == 'right') {
+			step++;
+			//旋转到原位置，即超过最大值
+			step > max_step && (step = min_step);
+		} else {
+			step--;
+			step < min_step && (step = max_step);
+		}
+		//旋转角度以弧度值为参数
+		var degree = step * 90 * Math.PI / 180;
+		var ctx = canvas.getContext('2d');
+		switch (step) {
+		case 0:
+			canvas.width = width;
+			canvas.height = height;
+			ctx.drawImage(img, 0, 0);
+			break;
+		case 1:
+			canvas.width = height;
+			canvas.height = width;
+			ctx.rotate(degree);
+			ctx.drawImage(img, 0, -height);
+			break;
+		case 2:
+			canvas.width = width;
+			canvas.height = height;
+			ctx.rotate(degree);
+			ctx.drawImage(img, -width, -height);
+			break;
+		case 3:
+			canvas.width = height;
+			canvas.height = width;
+			ctx.rotate(degree);
+			ctx.drawImage(img, -width, 0);
+			break;
+		}
+	}
+
+	function uploadImg(inputId) {
+		var Orientation = null;//获取照片方向角属性，用户旋转控制
+		var file = document.getElementById(inputId).files[0];
+		EXIF.getData(file, function() {
+			EXIF.getAllTags(this);
+			Orientation = EXIF.getTag(this, 'Orientation');
+		});
+		var oReader = new FileReader();
+		oReader.onload = function(e) {
+			var image = new Image();
+			image.src = e.target.result;
+			image.onload = function() {
+				var expectWidth = this.naturalWidth;
+				var expectHeight = this.naturalHeight;
+				if (this.naturalWidth > this.naturalHeight
+						&& this.naturalWidth > 800) {
+					expectWidth = 800;
+					expectHeight = expectWidth * this.naturalHeight
+							/ this.naturalWidth;
+				} else if (this.naturalHeight > this.naturalWidth
+						&& this.naturalHeight > 1200) {
+					expectHeight = 1200;
+					expectWidth = expectHeight * this.naturalWidth
+							/ this.naturalHeight;
+				}
+				var canvas = document.createElement("canvas");
+				var ctx = canvas.getContext("2d");
+				canvas.width = expectWidth;
+				canvas.height = expectHeight;
+				ctx.drawImage(this, 0, 0, expectWidth, expectHeight);
+				var base64 = null;
+				//修复ios
+				if (navigator.userAgent.match(/iphone/i)) {
+					// console.log('iphone');
+					//如果方向角不为1，都需要进行旋转 added by lzk
+					if (Orientation != null && Orientation != 1) {
+						// alert('旋转处理');
+						switch (Orientation) {
+						case 6://需要顺时针（向左）90度旋转
+							// alert('需要顺时针（向左）90度旋转');
+							rotateImg(this, 'left', canvas);
+							break;
+						case 8://需要逆时针（向右）90度旋转
+							// alert('需要顺时针（向右）90度旋转');
+							rotateImg(this, 'right', canvas);
+							break;
+						case 3://需要180度旋转
+							// alert('需要180度旋转');
+							rotateImg(this, 'right', canvas);//转两次
+							rotateImg(this, 'right', canvas);
+							break;
+						}
+					}
+					base64 = canvas.toDataURL("image/jpeg", 0.8);
+				} else if (navigator.userAgent.match(/Android/i)) {// 修复android
+					base64 = e.target.result;
+				} else {
+					if (Orientation != null && Orientation != 1) {
+						switch (Orientation) {
+						case 6://需要顺时针（向左）90度旋转
+							// alert('需要顺时针（向左）90度旋转');
+							rotateImg(this, 'left', canvas);
+							break;
+						case 8://需要逆时针（向右）90度旋转
+							// alert('需要顺时针（向右）90度旋转');
+							rotateImg(this, 'right', canvas);
+							break;
+						case 3://需要180度旋转
+							// alert('需要180度旋转');
+							rotateImg(this, 'right', canvas);//转两次
+							rotateImg(this, 'right', canvas);
+							break;
+						}
+					}
+					base64 = canvas.toDataURL("image/jpeg", 0.8);
+				}
+				uploadFileByBase64("/file/upload/" + 1, base64, function(path) {
+					console.log(path);
+					if (inputId == "img1") {
+						pre1Path = path;
+						$('#pre1').attr('src', pre1Path);
+						$('#pre1').show();
+					} else if (inputId == "img2") {
+						pre2Path = path;
+						$('#pre2').attr('src', pre2Path);
+						$('#pre2').show();
+					} else if (inputId == "img3") {
+						pre3Path = path;
+						$('#pre3').attr('src', pre3Path);
+						$('#pre3').show();
+					} else if (inputId == "img4") {
+						pre4Path = path;
+						$('#pre4').attr('src', pre4Path);
+						$('#pre4').show();
+					} else if (inputId == "img5") {
+						pre5Path = path;
+						$('#pre5').attr('src', pre5Path);
+						$('#pre5').show();
+					} else if (inputId == "img6") {
+						pre6Path = path;
+						$('#pre6').attr('src', pre6Path);
+						$('#pre6').show();
+					}
+				});
+
+			};
+		};
+		oReader.readAsDataURL(file);
+	}
+	function submitComment() {
+		var expressId = getQueryString("expressId");
+		var t = getQueryString("t");
+		var comments = $("#comments").val();
+		if (result1 < 1) {
+			alert("请为物流时效打分！");
+			return;
+		}
+		if (result2 < 1) {
+			alert("请为包装完整打分！")
+			return;
+		}
+		if (result2 < 1) {
+			alert("请为服务态度打分！")
+			return;
+		}
+		var imgs = '';
+		if (pre1Path) {
+			imgs = pre1Path;
+		}
+		if (pre2Path) {
+			imgs = imgs + "," + pre2Path;
+		}
+		if (pre3Path) {
+			imgs = imgs + "," + pre3Path;
+		}
+		if (pre4Path) {
+			imgs = imgs + "," + pre4Path;
+		}
+		if (pre5Path) {
+			imgs = imgs + "," + pre5Path;
+		}
+		if (pre6Path) {
+			imgs = imgs + "," + pre6Path;
+		}
+
+		var formData = {
+			"expressId" : expressId,
+			"t" : t,
+			"comment" : comments,
+			"score1" : result1,
+			"score2" : result2,
+			"score3" : result3,
+			"imgs" : imgs
+		}
+		formPost4Json("/comment/addComment", formData, function(data,
+				httpOptions, status) {
+			if (checkErrorDatas(data, httpOptions)) {
+				alert("评价成功！");
+				queryComment();
+			}
+		});
+	}
+
+	function getQueryString(name) {
+		var reg = new RegExp("(^|&)" + name + "=([^&]*)(&|$)", "i");
+		var r = window.location.search.substr(1).match(reg);
+		if (r != null)
+			return unescape(r[2]);
+		return null;
+	}
+	queryComment();
+	function queryComment() {
+		var formData = {
+			"expressId" : getQueryString("expressId"),
+			"t" : getQueryString("t")
+		}
+		formPost4Json("/comment/getComment", formData, function(data,
+				httpOptions, status) {
+			if (checkErrorDatas(data, httpOptions)) {
+				if (data.comment) {
+					$("#unfinish").hide();
+					$("#finished").show();
+					$("#submitComment").val("评价语: " + data.comment.comment);
+					hideStar(data.comment.timelinessScore, "wlsx");
+					hideStar(data.comment.wholenessScore, "bzwz");
+					hideStar(data.comment.serveScore, "sjtd");
+					var imgs = data.comment.imgs;
+					if (imgs != null && imgs.length > 0) {
+						var imgArray = imgs.split(",");
+						for (var i = 0; i < imgArray.length; i++) {
+							var j = i + 1;
+							var id = "p" + j
+							$('#' + id).attr('src', imgArray[i]);
+							$('#' + id).show();
+						}
+					}
+				}
+			}
+		});
+
+	}
+	function hideStar(star, id) {
+		for (var i = star + 1; i <= 5; i++) {
+			var imgId = id + i;
+			$("#" + imgId + "").attr("src",
+					"./assets/comment/img/star-off-big.png")
+		}
+	}
+</script>
+</html>

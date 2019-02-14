@@ -1,0 +1,370 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.htkfood.mapper.slave.ReportMapper">
+	<sql id="Base_Column_List">
+		l.logisticsNo,
+		l.expressCompany,case WHEN l.logisticsStatus<![CDATA[<]]>4
+		THEN
+		ISNULL(ROUND(AVG((e.updateTime-l.arriveTime)),0),0)
+		WHEN
+		l.logisticsStatus<![CDATA[>=]]>4
+		THEN
+		ISNULL(ROUND(AVG((l.leaveTime-l.arriveTime)),0),0)
+		END
+		AS
+		inFactoryTime,
+		case
+		WHEN l.logisticsStatus<![CDATA[<]]>3
+		THEN
+		ISNULL(ROUND(AVG((l.arriveTime-l.dispatchTime)),0),0)
+		WHEN
+		l.logisticsStatus<![CDATA[<]]>4
+		THEN
+		ISNULL(ROUND(AVG((l.shipmentTime-l.dispatchTime)),0),0)
+		WHEN
+		l.logisticsStatus<![CDATA[<]]>5
+		and e.status=1 THEN
+		ISNULL(ROUND(AVG((e.updateTime-l.dispatchTime)),0),0)
+		WHEN
+		l.logisticsStatus<![CDATA[<]]>5
+		and e.status=0 THEN
+		ISNULL(ROUND(AVG((l.leaveTime-l.dispatchTime)),0),0)
+		WHEN
+		l.logisticsStatus<![CDATA[>=]]>5
+		THEN
+		ISNULL(ROUND(AVG((l.deliveryTime-l.dispatchTime)),0),0)
+		END AS
+		transportTime
+		,
+		ISNULL(ROUND(AVG(c.serveScore+c.timelinessScore+c.wholenessScore),1),0)
+		AS commentScore
+	</sql>
+	<select id="getReport" parameterType="com.htkfood.mapper.Criteria"
+		resultType="com.htkfood.entity.ReportEntity">
+		select tt.*,b.logisticsNo from (
+		select
+		expressCompany,AVG(inFactoryTime) as inFactoryTime ,AVG(transportTime)
+		as transportTime,AVG(commentScore) as commentScore from (
+		SELECT
+		<include refid="Base_Column_List" />
+		FROM htk_logistics l
+		LEFT JOIN htk_express e ON l.id=e.logisticsId
+		LEFT
+		JOIN htk_comment c ON e.id=c.expressId
+		WHERE l.logisticsStatus>=2
+		and
+		l.isDelete=0
+		<if test="condition.userId!=null">
+			and l.userId=#{condition.userId}
+		</if>
+		<if test="condition.expressCompany != null">
+			and l.expressCompany like #{condition.expressCompany}
+		</if>
+		<if test="condition.organization != null">
+			and l.organization = #{condition.organization}
+		</if>
+		<if test="condition.beginCreateTime != null">
+			and l.createTime <![CDATA[>=]]> #{condition.beginCreateTime}
+		</if>
+		<if test="condition.endCreateTime != null">
+			and l.createTime <![CDATA[<]]> #{condition.endCreateTime}
+		</if>
+		<if test="condition.beginArriveTime != null">
+			and l.arriveTime <![CDATA[>=]]> #{condition.beginArriveTime}
+		</if>
+		<if test="condition.endArriveTime != null">
+			and l.arriveTime <![CDATA[<]]> #{condition.endArriveTime}
+		</if>
+		<if test="condition.beginShipmentTime != null">
+			and l.shipmentTime <![CDATA[>=]]> #{condition.beginShipmentTime}
+		</if>
+		<if test="condition.endShipmentTime != null">
+			and l.shipmentTime <![CDATA[<]]> #{condition.endShipmentTime}
+		</if>
+		<if test="condition.beginLeaveTime != null">
+			and l.leaveTime <![CDATA[>=]]> #{condition.beginLeaveTime}
+		</if>
+		<if test="condition.endLeaveTime != null">
+			and l.leaveTime <![CDATA[<]]> #{condition.endLeaveTime}
+		</if>
+		<if test="condition.beginDispatchTime != null">
+			and l.dispatchTime <![CDATA[>=]]> #{condition.beginDispatchTime}
+		</if>
+		<if test="condition.endDispatchTime != null">
+			and l.dispatchTime <![CDATA[<]]> #{condition.endDispatchTime}
+		</if>
+		<if test="condition.beginDeliveryTime != null">
+			and l.deliveryTime <![CDATA[>=]]> #{condition.beginDeliveryTime}
+		</if>
+		<if test="condition.endDeliveryTime != null">
+			and l.deliveryTime <![CDATA[<]]> #{condition.endDeliveryTime}
+		</if>
+		GROUP BY
+		l.expressCompany,
+		l.logisticsStatus,
+		e.status,
+		l.logisticsNo
+		)t
+		GROUP BY
+		expressCompany
+		)tt
+		INNER JOIN (
+		select * from htk_logistics x
+		where id = (select max(id) from
+		htk_logistics y where
+		x.expressCompany=y.expressCompany)) b on
+		tt.expressCompany=b.expressCompany
+
+	</select>
+	<select id="getReportDetail" parameterType="com.htkfood.mapper.Criteria"
+		resultType="com.htkfood.entity.ReportDetailEntity">
+		SELECT
+		l.id as logisticsId , l.logisticsNo,
+		l.expressCompany,l.driverName,l.driverPhone,l.dispatchTime,l.arriveTime,e.deliveryOrder,
+		l.shipmentTime,l.leaveTime,case
+		WHEN l.logisticsStatus<![CDATA[<]]>5
+		and e.status=1 THEN
+		e.updateTime
+		WHEN l.logisticsStatus<![CDATA[<]]>5
+		and e.status=0 THEN
+		l.deliveryTime
+		WHEN l.logisticsStatus<![CDATA[>=]]>5
+		THEN
+		e.updateTime
+		END as deliveryTime,case WHEN l.logisticsStatus<![CDATA[<]]>4
+		THEN
+		ISNULL(e.updateTime-l.arriveTime,0)
+		WHEN l.logisticsStatus<![CDATA[>=]]>4
+		THEN
+		ISNULL(l.leaveTime-l.arriveTime,0)
+		END
+		AS inFactoryTime,
+		case
+		WHEN
+		l.logisticsStatus<![CDATA[<]]>3
+		THEN
+		ISNULL(l.arriveTime-l.dispatchTime,0)
+		WHEN l.logisticsStatus<![CDATA[<]]>4
+		THEN
+		ISNULL(l.shipmentTime-l.dispatchTime,0)
+		WHEN l.logisticsStatus<![CDATA[<]]>5
+		and e.status=1 THEN
+		ISNULL(e.updateTime-l.dispatchTime,0)
+		WHEN
+		l.logisticsStatus<![CDATA[<]]>5
+		and e.status=0 THEN
+		ISNULL(l.leaveTime-l.dispatchTime,0)
+		WHEN
+		l.logisticsStatus<![CDATA[>=]]>5
+		THEN
+		ISNULL(l.deliveryTime-l.dispatchTime,0)
+		END AS transportTime,e.id
+		as expressId,province.area_name as province,city.area_name as  city,e.client,e.receiver,e.receiverPhone,
+		ISNULL(c.id ,0)as
+		commentId,ISNULL(c.comment,'暂未评价') AS
+		comment,ISNULL(c.wholenessScore,-1) as
+		wholenessScore,ISNULL(c.timelinessScore,-1) as
+		timelinessScore,ISNULL(c.serveScore,-1) as serveScore,
+		c.imgs
+		FROM
+		htk_logistics l
+		LEFT JOIN htk_express e ON l.id=e.logisticsId
+		LEFT
+		JOIN
+		htk_comment c ON e.id=c.expressId
+		 LEFT JOIN T_BD_CUSTOMER_L  cl on cl.fname=e.client
+		left join dbo.T_BD_CUSTOMER cu  on cl.FCUSTID=cu.FCUSTID
+		left join  BASE_CHINA_AREA province on cu.F_HTK_PROVINCE=province.AREA_ID
+		left join  BASE_CHINA_AREA city on cu.F_HTK_CITY=city.AREA_ID
+		WHERE l.logisticsStatus>=2 and
+		l.isDelete=0
+		<if test="condition.userId!=null">
+			and l.userId=#{condition.userId}
+		</if>
+		<if test="condition.expressCompany != null">
+			and l.expressCompany=#{condition.expressCompany}
+		</if>
+		<if test="condition.organization != null">
+			and l.organization = #{condition.organization}
+		</if>
+			<if test="condition.beginCreateTime != null">
+			and l.createTime <![CDATA[>=]]> #{condition.beginCreateTime}
+		</if>
+		<if test="condition.endCreateTime != null">
+			and l.createTime <![CDATA[<]]> #{condition.endCreateTime}
+		</if>
+		<if test="condition.beginArriveTime != null">
+			and l.arriveTime <![CDATA[>=]]> #{condition.beginArriveTime}
+		</if>
+		<if test="condition.endArriveTime != null">
+			and l.arriveTime <![CDATA[<]]> #{condition.endArriveTime}
+		</if>
+		<if test="condition.beginShipmentTime != null">
+			and l.shipmentTime <![CDATA[>=]]> #{condition.beginShipmentTime}
+		</if>
+		<if test="condition.endShipmentTime != null">
+			and l.shipmentTime <![CDATA[<]]> #{condition.endShipmentTime}
+		</if>
+		<if test="condition.beginLeaveTime != null">
+			and l.leaveTime <![CDATA[>=]]> #{condition.beginLeaveTime}
+		</if>
+		<if test="condition.endLeaveTime != null">
+			and l.leaveTime <![CDATA[<]]> #{condition.endLeaveTime}
+		</if>
+		<if test="condition.beginDispatchTime != null">
+			and l.dispatchTime <![CDATA[>=]]> #{condition.beginDispatchTime}
+		</if>
+		<if test="condition.endDispatchTime != null">
+			and l.dispatchTime <![CDATA[<]]> #{condition.endDispatchTime}
+		</if>
+		<if test="condition.beginDeliveryTime != null">
+			and l.deliveryTime <![CDATA[>=]]> #{condition.beginDeliveryTime}
+		</if>
+		<if test="condition.endDeliveryTime != null">
+			and l.deliveryTime <![CDATA[<]]> #{condition.endDeliveryTime}
+		</if>
+	</select>
+
+
+	<select id="getOrderReport" parameterType="com.htkfood.mapper.Criteria"
+		resultType="com.htkfood.entity.OrderReportEntity">
+		SELECT a.fbillno as deliveryOrder into #erp
+		FROM
+		T_SAL_DELIVERYNOTICE a
+		LEFT JOIN
+		T_ORG_ORGANIZATIONS_L f ON
+		a.FDELIVERYORGID = f.FORGID
+		where 1=1
+		and a.FDOCUMENTSTATUS='C' 
+		<if test="condition.organization != null">
+			and f.fname = #{condition.organization}
+		</if>
+		<if test="condition.beginTime!=null">
+			and DATEDIFF(S, '1970-01-01 08:00:00',a.fdate)- 8 * 3600 <![CDATA[>=]]>
+			#{condition.beginTime}
+		</if>
+		<if test="condition.endTime!=null">
+			and DATEDIFF(S, '1970-01-01 08:00:00',a.fdate)- 8 * 3600 <![CDATA[<=]]>
+			#{condition.endTime}+24*60*60
+		</if>
+
+
+		select deliveryOrder into #logistics from htk_express a
+		LEFT JOIN
+		htk_logistics b on a.logisticsId=b.id
+		where 1=1
+		<if test="condition.organization != null">
+			and organization = #{condition.organization}
+		</if>
+		<if test="condition.beginTime!=null">
+			and a.createTime<![CDATA[>=]]>
+			#{condition.beginTime}
+		</if>
+		<if test="condition.endTime!=null">
+			and a.createTime <![CDATA[<=]]>
+			#{condition.endTime}+24*60*60
+		</if>
+		select 0 as id, count(1) as qty into #a1 from #erp
+
+		select 0 as id,
+		count(1) as qty into #a2 from #logistics
+
+
+		select 0 as id, count(1) as
+		qty into #a3 from #erp
+		where deliveryOrder in (select deliveryOrder
+		from #logistics )
+
+		select 0 as id, count(1) as qty into #a4 from #erp
+		where deliveryOrder not in (select deliveryOrder from #logistics )
+
+		select 0 as id, count(1)as qty into #a5 from #logistics
+		where
+		deliveryOrder in (select deliveryOrder from #erp )
+
+		select 0 as id,
+		count(1) as qty into #a6 from #logistics
+		where deliveryOrder not in
+		(select deliveryOrder from #erp )
+
+		select a.qty as erpQty,
+		b.qty as
+		logisticsQty,
+		c.qty as erpMatchQty,
+		d.qty as erpNoMatchLogisticsQty,
+		e.qty as matchQty,
+		f.qty as logisticsNoMatchErpQty,
+		CASE when a.qty!=0
+		then
+		concat((cast(b.qty as float) / a.qty)*100,'%')
+		ELSE '0.0%'
+		end
+		as finishRate,
+		CASE when a.qty!=0 then
+		concat((cast(e.qty as float) / a.qty)*100,'%')
+		else '0.0%' end as finishMatchRate
+
+		from
+		#a1 a
+		LEFT JOIN #a2 b on a.id=b.id
+		LEFT JOIN #a3 c on a.id=c.id
+		LEFT JOIN #a4 d on a.id=d.id
+		LEFT JOIN #a5
+		e on a.id=e.id
+		LEFT JOIN #a6 f on a.id=f.id
+
+
+		drop table
+		#erp,#logistics,#a1,#a2,#a4,#a3,#a5,#a6
+
+	</select>
+	
+	
+	<select id="getOrderReportDetailList" parameterType="com.htkfood.mapper.Criteria"
+		resultType="com.htkfood.entity.OrderDetailReportEntity">
+		
+		select  a.deliveryOrder as  erpOrder,b.deliveryOrder  as  logisticsOrder from  (
+		
+		SELECT a.fbillno as deliveryOrder 
+		FROM
+		T_SAL_DELIVERYNOTICE a
+		LEFT JOIN
+		T_ORG_ORGANIZATIONS_L f ON
+		a.FDELIVERYORGID = f.FORGID
+		where 1=1
+		and a.FDOCUMENTSTATUS='C' 
+		<if test="condition.organization != null">
+			and f.fname = #{condition.organization}
+		</if>
+		<if test="condition.beginTime!=null">
+			and DATEDIFF(S, '1970-01-01 08:00:00',a.fdate)- 8 * 3600 <![CDATA[>=]]>
+			#{condition.beginTime}
+		</if>
+		<if test="condition.endTime!=null">
+			and DATEDIFF(S, '1970-01-01 08:00:00',a.fdate)- 8 * 3600 <![CDATA[<=]]>
+			#{condition.endTime}+24*60*60
+		</if>
+		)a full join  (
+
+
+		select deliveryOrder  from htk_express a
+		LEFT JOIN
+		htk_logistics b on a.logisticsId=b.id
+		where 1=1
+		<if test="condition.organization != null">
+			and organization = #{condition.organization}
+		</if>
+		<if test="condition.beginTime!=null">
+			and a.createTime<![CDATA[>=]]>
+			#{condition.beginTime}
+		</if>
+		<if test="condition.endTime!=null">
+			and a.createTime <![CDATA[<=]]>
+			#{condition.endTime}+24*60*60
+		</if>
+		) b  on  a.deliveryOrder=b.deliveryOrder
+		ORDER BY a.deliveryOrder desc ,b.deliveryOrder desc
+
+	</select>
+
+</mapper>

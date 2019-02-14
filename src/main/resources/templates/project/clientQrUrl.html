@@ -1,0 +1,266 @@
+﻿<!doctype html>
+<html>
+<head>
+<title>物流节点跟踪</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<link href="../assets/css/info.css" rel="stylesheet" type="text/css"
+	media="all" />
+</head>
+<style type="text/css">
+[v-cloak] {
+	display: none !important;
+}
+</style>
+
+<body>
+	<div id="app" v-cloak>
+		<div class="header" id="qr">
+			<img :src="qrUrl" />
+		</div>
+			<div class="header">
+
+					<button id="myButton"
+						style="border: none; margin: 10px; padding-left: 15px; padding-right: 15px; padding-bottom: 8px; padding-top: 8px; background: #5cadad; letter-spacing: 2px; display: none;"
+						onclick="location2Comment()">查看评论</button>
+
+				</div>
+
+		<div class="content">
+			<div class="content1">
+				<h2>运输单号:{{express.transportNo}}</h2>
+				
+			</div>
+			<div class="content2">
+				<div class="content2-header1">
+					<p>
+						承运单位: <span>{{logistics.expressCompany}}</span>
+					</p>
+				</div>
+				<div class="content2-header1">
+					<p>
+						物流联系人: <span>{{logistics.driverName}}</span>
+					</p>
+				</div>
+				<div class="content2-header1">
+					<p>
+						联系人电话: <span>{{logistics.driverPhone}}</span>
+					</p>
+				</div>
+				<div class="clear"></div>
+			</div>
+			<div class="content2">
+				<div class="content2-header1">
+					<p>
+						客户: <span>{{express.client}}</span>
+					</p>
+				</div>
+				<div class="content2-header1">
+					<p>
+						收货人: <span>{{express.receiver}}</span>
+					</p>
+				</div>
+				<div class="content2-header1">
+					<p>
+						收货地址: <span>{{express.receiveAddress}}</span>
+					</p>
+				</div>
+				<div class="clear"></div>
+			</div>
+			<div class="content3">
+				<div class="shipment">
+					<div class="confirm">
+						<div v-show="logistics.logisticsStatus<1" class="imgcircle red">
+							<img src="../assets/img/info/confirm.png" alt="confirm order">
+						</div>
+						<div v-show="logistics.logisticsStatus>=1" class="imgcircle green">
+							<img src="../assets/img/info/confirm.png" alt="confirm order">
+						</div>
+						<span v-show="logistics.logisticsStatus<2" class="line red"></span>
+						<span v-show="logistics.logisticsStatus>=2" class="line green"></span>
+						<label v-if="logistics.logisticsStatus>=1">{{logistics.dispatchTime | time}}</label>
+						<p>调度叫车</p>
+					</div>
+					<div class="process">
+						<div v-show="logistics.logisticsStatus<2" class="imgcircle red">
+							<img src="../assets/img/info/process.png" alt="process order">
+						</div>
+						<div v-show="logistics.logisticsStatus>=2" class="imgcircle green">
+							<img src="../assets/img/info/process.png" alt="process order">
+						</div>
+						<span v-show="logistics.logisticsStatus<3" class="line red"></span>
+						<span v-show="logistics.logisticsStatus>=3" class="line green"></span>
+						<label v-if="logistics.logisticsStatus>=2">{{logistics.arriveTime | time}}</label>
+						<p >车辆到厂</p>
+					</div>
+					<div class="quality">
+						<div class="imgcircle red" v-show="logistics.logisticsStatus<3">
+							<img src="../assets/img/info/quality.png" alt="quality check">
+						</div>
+						<div class="imgcircle green" v-show="logistics.logisticsStatus>=3">
+							<img src="../assets/img/info/quality.png" alt="quality check">
+						</div>
+						<span v-show="logistics.logisticsStatus<4" class="line red"></span>
+						<span v-show="logistics.logisticsStatus>=4" class="line green"></span>
+						<label v-if="logistics.logisticsStatus>=3">{{logistics.shipmentTime | time}}</label>
+						<p>装载货物</p>
+					</div>
+					<div class="dispatch">
+						<div class="imgcircle red" v-show="logistics.logisticsStatus<4">
+							<img src="../assets/img/info/dispatch.png" alt="dispatch product">
+						</div>
+						<div class="imgcircle green" v-show="logistics.logisticsStatus>=4">
+							<img src="../assets/img/info/dispatch.png" alt="dispatch product">
+						</div>
+						<span class="line red" v-show="express.status==0"></span> <span
+							class="line green" v-show="express.status>=1"></span>
+						<label v-if="logistics.logisticsStatus>=4">{{logistics.leaveTime | time}}</label>
+						<p>车辆出厂</p>
+					</div>
+					<div class="delivery">
+						<div class="imgcircle red" v-show="express.status==0">
+							<img src="../assets/img/info/delivery.png" alt="delivery">
+						</div>
+						<div class="imgcircle green" v-show="express.status>=1">
+							<img src="../assets/img/info/delivery.png" alt="delivery">
+						</div>
+						<label v-if="express.status>=1">{{express.updateTime | time}}</label>
+						<p>货物送达</p>
+					</div>
+					<div class="clear"></div>
+				</div>
+			</div>
+		</div>
+	</div>
+</body>
+
+<script src="../assets/js/jquery-1.10.2.js"></script>
+<script src="../assets/js/bootstrap.min.js"></script>
+<script src="../assets/js/httpUtil.js"></script>
+<script src="../assets/js/common.js"></script>
+<script src="../assets/js/vue.js"></script>
+<script>
+	$(function() {
+		var app = new Vue({
+			el : '#app',
+			filters : {
+				logisticsStatus : function(status) {
+					if (status == 0) {
+						return "已创建";
+					}
+					if (status == 1) {
+						return "已调车";
+					}
+					if (status == 2) {
+						return "已进厂";
+					}
+					if (status == 3) {
+						return "已装载";
+					}
+					if (status == 4) {
+						return "已出厂";
+					}
+					if (status == 5) {
+						return "已送达";
+					}
+					if (status == 6) {
+						return "已评价";
+					}
+					return "未知";
+
+				},
+				time : function(value) {
+					if(!value)
+						return;
+					var date = new Date(value * 1000);//时间戳为10位需*1000
+					var Y = date.getFullYear() + '-';
+					var M = (date.getMonth() + 1 < 10 ? '0'
+							+ (date.getMonth() + 1)
+							: date.getMonth() + 1)
+							+ '-';
+					var D = (date.getDate()>9?date.getDate():'0'+date.getDate()) + ' ';
+					var h = (date.getHours()>9?date.getHours():'0'+date.getHours())+ ':';
+					var m = date.getMinutes()>9?date.getMinutes():'0'+date.getMinutes();
+					return Y + M + D + h + m ;
+
+				}
+			},
+			data : {
+				logisticsNo : "",
+				logistics : {},
+				express : {},
+				qrUrl : "",
+				t : ""
+			},
+			methods : {}
+		});
+		//获取物流单号
+		app.expressId = getQueryString("e");
+		app.t = getQueryString("t");
+		var formData = {
+			"expressId" : app.expressId,
+			"t" : app.t
+		}
+		formPost4Json("/express/queryLogistics", formData, function(data,
+				httpOptions, status) {
+			if (checkErrorDatas(data, httpOptions)) {
+				app.logistics = data.logistics;
+				app.express = data.express;
+			}
+		});
+		var url = window.location.protocol + "//" + window.location.host;
+		app.qrUrl = url + "/getQrCode?info=" + url
+				+ "/clientQrScanResult?expressId=" + app.expressId + "&t="
+				+ app.t;
+		var flag = null;
+		queryComment();
+		function queryComment() {
+			var formData = {
+				"expressId" : getQueryString("e"),
+				"t" : getQueryString("t")
+			}
+			formPost4Json("/comment/getComment", formData, function(data,
+					httpOptions, status) {
+				if (checkErrorDatas(data, httpOptions)) {
+					if (!data.comment) {
+						flag = setInterval(queryStatus, 1500);
+					} else {
+						$("#myButton").show();
+						$("#qr").hide();
+					}
+				}
+			});
+
+		}
+		//做轮询
+		function queryStatus() {
+			var queryData = {
+				"expressId" : app.expressId,
+				"t" : app.t
+			}
+			formPost4Json("/express/queryStatus", queryData, function(data,
+					httpOptions, status) {
+				if (checkErrorDatas(data, httpOptions)) {
+					if (data.status == 1) {
+						clearInterval(flag);
+						window.location.href = "comment?expressId="
+								+ app.expressId + "&t=" + app.t;
+					}
+				}
+			});
+		}
+
+	});
+	function location2Comment() {
+		window.location.href = "comment?expressId="
+				+ getQueryString("e") + "&t=" + getQueryString("t");
+	}
+	function getQueryString(name) {
+		var reg = new RegExp("(^|&)" + name + "=([^&]*)(&|$)", "i");
+		var r = window.location.search.substr(1).match(reg);
+		if (r != null)
+			return unescape(r[2]);
+		return null;
+	}
+</script>
+</html>

@@ -1,0 +1,127 @@
+package com.htkfood.service.impl;
+import java.util.List;
+import java.util.Map;
+
+import org.apache.commons.lang.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import com.htkfood.entity.ExpressEntity;
+import com.htkfood.entity.LogisticsEntity;
+import com.htkfood.entity.NotificationEntity;
+import com.htkfood.exception.CommonException;
+import com.htkfood.exception.CommonExceptionHelper;
+import com.htkfood.mapper.master.NotificationMapper;
+import com.htkfood.service.ExpressService;
+import com.htkfood.service.LogisticsService;
+import com.htkfood.service.QrScanService;
+
+@Service
+public class QrScanServiceImpl implements QrScanService {
+	private Logger logger =LoggerFactory.getLogger(QrScanServiceImpl.class);
+	@Autowired
+	private LogisticsService logisticsService;
+	@Autowired
+	private ExpressService expressService;
+	@Autowired
+	private NotificationMapper notificationMapper;
+
+	@Override
+	@Transactional(rollbackFor = { CommonException.class, RuntimeException.class, Error.class })
+	public void driverQrScan(String logisticsNo, String t, Map<String, Object> result) throws CommonException {
+		LogisticsEntity logisticsEntity = logisticsService.getLogisticsByNo(null, logisticsNo);
+		if (t != null && logisticsEntity.getAccessToken().equals(t)) {
+			Integer status = logisticsEntity.getLogisticsStatus();
+			if (status == 1) {// 扫描确认进厂
+				logisticsService.updateStatus(logisticsEntity.getId(), 2, null);
+				// 发送通知
+				String notification =null;
+				if(StringUtils.isNotBlank(logisticsEntity.getDestination())) {	
+					notification= String.format("物流单号为[%s]司机[%s]发往[%s]已经到厂,司机号码是[%s]", 
+						logisticsEntity.getLogisticsNo(), logisticsEntity.getDriverName(),logisticsEntity.getDestination(),
+						logisticsEntity.getDriverPhone());
+				}else {
+					notification= String.format("物流单号为[%s]司机[%s]已经到厂,司机号码是[%s]", 
+							logisticsEntity.getLogisticsNo(), logisticsEntity.getDriverName(),
+							logisticsEntity.getDriverPhone());
+				}
+				NotificationEntity notificationEntity=new NotificationEntity();
+				notificationEntity.setReceiver(logisticsEntity.getOrganization());
+				notificationEntity.setStatus(0);
+				notificationEntity.setNotification(notification);
+				notificationEntity.setCreateTime(System.currentTimeMillis()/1000);
+				notificationEntity.setUpdateTime(System.currentTimeMillis()/1000);
+				notificationMapper.insertByEntity(notificationEntity);
+				result.put("result", String.format("确认[%s]司机[%s]到厂,物流发往[%s]", 
+						logisticsEntity.getExpressCompany(), logisticsEntity.getDriverName(),
+						logisticsEntity.getDestination()));
+				return;
+			}
+			if (status == 3) {// 扫描确认出厂
+				logisticsService.updateStatus(logisticsEntity.getId(), 4, null);
+				result.put("result", String.format("确认[%s]司机[%s]出厂,物流发往[%s]", 
+						logisticsEntity.getExpressCompany(), logisticsEntity.getDriverName(),
+						logisticsEntity.getDestination()));
+				return;
+			}
+			if (status >= 1 && status < 4) {
+				result.put("result", String.format("[%s]司机[%s]已经进厂,物流发往[%s]", 
+						logisticsEntity.getExpressCompany(), logisticsEntity.getDriverName(),
+						logisticsEntity.getDestination()));
+				return;
+			}
+			if (status >= 4) {
+				result.put("result", String.format("[%s]司机[%s]已经出厂,物流发往[%s]", 
+						logisticsEntity.getExpressCompany(), logisticsEntity.getDriverName(),
+						logisticsEntity.getDestination()));
+				return;
+			}
+		} else {
+			logger.error(String.format("物流单号[%s],token[%s]不存在", logisticsNo,t));
+			throw CommonExceptionHelper.commonException("物流信息不存在", null);
+		}
+
+	}
+
+	@Override
+	@Transactional(rollbackFor = { CommonException.class, RuntimeException.class, Error.class })
+	public void clientQrScan(Long expressId, String t, Map<String, Object> result) throws CommonException {
+		ExpressEntity entity = expressService.queryExpressById(expressId);
+		LogisticsEntity logisticsEntity = logisticsService.getLogisticsById(null, entity.getLogisticsId());
+		if(logisticsEntity.getLogisticsStatus()==3 ||logisticsEntity.getLogisticsStatus()!=4) {
+			throw CommonExceptionHelper.commonException("运送车辆未出厂,请确定运送车辆已出厂",null);
+		}
+		
+		if (t != null && entity.getToken().equals(t)) {
+			if (entity.getStatus() == 0) {
+				ExpressEntity update = new ExpressEntity();
+				update.setId(expressId);
+				update.setStatus(1);
+				update.setUpdateTime(System.currentTimeMillis() / 1000);
+				expressService.updateByEntity(update);
+			}
+			logisticsEntity = logisticsService.getLogisticsById(null, entity.getLogisticsId());
+			List<ExpressEntity> entities = logisticsEntity.getExpressEntity();
+			int size = entities.size();
+			boolean flag = true;// 全部送达标志
+			ExpressEntity oldEntity = null;
+			for (int i = 0; i < size; i++) {
+				oldEntity = entities.get(i);
+				if (oldEntity.getStatus() == 0) {
+					flag = false;
+					break;
+				}
+			}
+			if (flag) {// 全部送达更改物流标志
+				logisticsService.updateStatus(logisticsEntity.getId(), 5, null);
+			}
+			result.put("result", "出库单为:" + entity.getDeliveryOrder() + " 已送达！");
+		} else {
+			logger.error(String.format("出库单号[%s],token[%s]不存在", expressId,t));
+			throw CommonExceptionHelper.commonException("物流信息不存在", null);
+		}
+	}
+
+}

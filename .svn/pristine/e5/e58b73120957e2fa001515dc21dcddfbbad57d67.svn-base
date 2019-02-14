@@ -1,0 +1,134 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>回头客物流跟踪系统</title>
+<link rel="stylesheet" href="../assets/css/bootstrap.css" />
+<link rel="stylesheet" href="../assets/css/css.css" />
+<script src="../assets/js/jquery-1.10.2.js"></script>
+<script src="../assets/js/bootstrap.min.js"></script>
+<script src="../assets/js/httpUtil.js"></script>
+<script src="../assets/js/common.js"></script>
+<script src="../assets/js/vue.js"></script>
+<script src="../assets/js/clipboard.js"></script>
+<script src="../assets/js/clipboard.min.js"></script>
+<script src="../assets/js/clipboard-action.js"></script>
+</head>
+<body>
+	<div class="title_right">
+		<strong>地址复制</strong>
+	</div>
+	<div id="app">
+		<div style="width: 900px; margin: auto;">
+			<span>物流单号:{{logistics.logisticsNo}}</span> <span
+				style="margin-left: 10px">承运公司:{{logistics.expressCompany}}</span> <span
+				style="margin-left: 10px">司机姓名:{{logistics.driverName}}</span> <span
+				style="margin-left: 10px">司机电话:{{logistics.driverPhone}}</span> 
+				<table class="table table-bordered" id="mtable">
+					<tr>
+						<td align="center" nowrap="nowrap" bgcolor="#f1f1f1">名称</td>
+						<td align="center" nowrap="nowrap" bgcolor="#f1f1f1">二维码链接</td>
+						<td align="center" nowrap="nowrap" bgcolor="#f1f1f1">操作</td>
+					</tr>
+					<tr v-if="logistics.logisticsStatus>0">
+						<td align="center">司机</td>
+						<td align="center"><input id="driver"style="width:500px;background: #00000000;border: none;" readonly="readonly"
+						v-model="driverUrl" /></td>
+						<td align="center"><button class="driverBtn" data-clipboard-target="#driver">复制</button></td>
+					</tr>
+					<tr v-if="logistics.logisticsStatus>2">
+						<td align="center">业务员</td>
+						<td align="center"><input id="employee" style="width:500px;background: #00000000;border: none;" readonly="readonly"
+						v-model="employeeUrl" /></td>
+						<td align="center"><button class="employeeBtn" data-clipboard-target="#employee">复制</button></td>
+					</tr>
+					<tr v-if="logistics.logisticsStatus>2" v-for="(express,index) in logistics.expressEntity">
+						<td align="center">{{express.client}}</td>
+						<td align="center"><input  style="width:500px;background: #00000000;border: none;" readonly="readonly" :id="clientIds[index]" 
+						v-model="clientUrls[index]" /></td>
+						<td align="center"><button :class="clientClass[index]" :data-clipboard-target="clipboardTargets[index]">复制</button></td>
+					</tr>
+				</table>
+		</div>
+	</div>
+</body>
+<script>
+var clipboard = new Clipboard('.driverBtn');
+var clipboard = new Clipboard('.employeeBtn');
+var clipboards=[];
+clipboard.on('error', function(e) {
+    alert("当前浏览器不支持点击复制,请手动复制");
+});
+	$(function() {
+		var app = new Vue(
+				{
+					el : '#app',
+					data : {
+						logistics : {},
+						driverUrl:"",
+						employeeUrl:"",
+						clientUrls:[],
+						clientIds:[],
+						clientClass:[],
+						clipboardTargets:[]
+					},
+					methods : {
+					}
+				});
+		//获取物流单号
+		app.logisticsNo = getQueryString("logisticsNo");
+		var formData = {
+			"logisticsNo" : app.logisticsNo,
+			"t" : getQueryString("t")
+		}
+		formPost4Json("/logistics/queryLogistics", formData, function(data,
+				httpOptions, status) {
+			if (checkErrorDatas(data, httpOptions)) {
+				app.logistics = data.logistics;
+				initUrl();
+			}
+		});
+	
+		function initUrl(){
+			var url = window.location.protocol + "//"
+			+ window.location.host;
+			app.driverUrl = url + "/d?l="
+			+ app.logistics.logisticsNo
+			+ "&t="
+			+ app.logistics.accessToken;
+			app.employeeUrl = url + "/e?l="
+			+ app.logistics.logisticsNo
+			+ "&t="
+			+ app.logistics.accessToken;
+			for(var i=0;i<app.logistics.expressEntity.length;i++){
+				var clientUrl = url
+				+ "/c?e="
+				+ app.logistics.expressEntity[i].id
+				+ "&t="
+				+ app.logistics.expressEntity[i].token;
+				app.clientUrls.push(clientUrl);
+				var id="clientId"+i;
+				var clazz="clientClass"+i;
+				var target="#clientId"+i;
+				app.clientIds.push(id);
+				app.clientClass.push(clazz);
+				app.clipboardTargets.push(target);
+				var clip=new Clipboard('.'+clazz);
+				clipboards.push(clip);
+			}
+			
+		}
+
+	});
+	
+	
+	function getQueryString(name) {
+		var reg = new RegExp("(^|&)" + name + "=([^&]*)(&|$)", "i");
+		var r = window.location.search.substr(1).match(reg);
+		if (r != null)
+			return unescape(r[2]);
+		return null;
+	}
+</script>
+
+</html>

@@ -1,0 +1,658 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>回头客物流跟踪系统</title>
+<link rel="stylesheet" href="../assets/css/bootstrap.css" />
+<link rel="stylesheet" href="../assets/css/css.css" />
+<script src="../assets/js/jquery-1.10.2.js"></script>
+<script src="../assets/js/bootstrap.min.js"></script>
+<script src="../assets/js/httpUtil.js"></script>
+<script src="../assets/js/common.js"></script>
+<script src="../assets/js/vue.js"></script>
+<script src="../assets/js/exif.js"></script>
+<script src="../assets/js/utils.js"></script>
+<!-- 引入样式 -->
+<link rel="stylesheet"
+	href="https://unpkg.com/element-ui/lib/theme-chalk/index.css">
+	<!-- 引入组件库 -->
+	<script src="https://unpkg.com/element-ui/lib/index.js"></script>
+	<style type="text/css">
+[v-cloak] {
+	display: none !important;
+}
+
+.demo-table-expand {
+	font-size: 0;
+}
+
+.demo-table-expand label {
+	width: 100px;
+	color: #99a9bf;
+}
+
+.demo-table-expand .el-form-item {
+	margin-right: 0;
+	margin-bottom: 0;
+	width: 50%;
+}
+</style>
+</head>
+<body>
+	<div class="title_right">
+		<strong>基础管理</strong>
+	</div>
+	<div id="app" v-cloak>
+		<el-container style="height: 700px;"> <el-header>
+		<span style="margin-right: 5px; font-size: 16px;">所属组织:</span> 
+		<select
+						style="width: 160px; height: 27px; font-size: 12px;"
+						@change="searchInfo()" v-model="search.organization">
+						<option v-for="post  in user.userPostVos" :value="post.orgName">{{post.orgName}}</option>
+		</select>
+		<span style="margin-right: 5px; font-size: 16px;">司机姓名:</span> <el-input
+			size="small" style="width:120px;" v-model="search.name"
+			placeholder="请输入司机姓名"></el-input> <span
+			style="margin-right: 5px; font-size: 16px;">车牌号码:</span> <el-input
+			size="small" style="width:120px;" v-model="search.plate"
+			placeholder="请输入车牌号码"></el-input> <span
+			style="margin-right: 5px; font-size: 16px;">手机号码:</span> <el-input
+			size="small" style="width:120px;" v-model="search.phone"
+			placeholder="请输入手机号码"></el-input> <el-button type="primary"
+			size='small' @click='searchInfo()'>搜索</el-button> <el-button
+			type="primary" size='small' @click='handleClick()'>添加</el-button></el-header> <el-main>
+		<el-table :data="DriverAndVehicleList" border
+			highlight-current-row
+			@current-change="handleChange"
+			style="width: 100%"> <el-table-column prop="name" label="司机姓名"> </el-table-column> <el-table-column prop="phone"
+			label="司机电话"> </el-table-column> <el-table-column prop="idCard"
+			label="身份证号"> </el-table-column> <el-table-column prop="plate"
+			label="车牌号码"> </el-table-column><el-table-column prop="vehicleType"
+			label="车辆类型"> </el-table-column>
+			<el-table-column prop="owner"
+			label="车辆所有人"> </el-table-column>
+			<el-table-column prop="engineNo"
+			label="发动机号"> </el-table-column>
+			<el-table-column 
+			label="行驶证照片" width="100"> <template
+			slot-scope="scope"> <el-button type="success"
+			plain
+			 @click="showVehiclePhoto(scope.row)" size="small">查看</el-button>
+			 </template>
+			 </el-table-column>
+			 <el-table-column 
+			label="驾驶证照片" width="100"> <template
+			slot-scope="scope"> <el-button type="success"
+			plain
+			 @click="showDriverPhoto(scope.row)" size="small">查看</el-button>
+			 </template>
+			 </el-table-column>
+			
+			
+			<el-table-column fixed="right"
+			label="操作" width="180"> <template
+			slot-scope="scope"> <el-button type="success"
+			plain
+			 @click="handleClick(scope.row)" size="small">编辑资料</el-button>
+			  <el-button type="danger"
+			plain
+			 @click="deleteRow(scope.row)" size="small">删除</el-button>
+			 </template>
+			 </el-table-column>
+			 
+			 </el-table>
+		</el-main> </el-container>
+		<div style='text-align: center'>
+			<el-pagination @size-change="handleSizeChange"
+				@current-change="handleCurrentChange" :current-page="currentPage"
+				:page-sizes="[5,10, 15, 20, 30]" :page-size="pageSize"
+				layout="total, sizes, prev, pager, next, jumper" :total="total">
+			</el-pagination>
+		</div>
+
+
+		<el-dialog title="司机和车辆信息" :visible="dialogShow"
+			:before-close="handleClose" center width="900px">
+			
+		<el-container>
+		
+		<el-aside width="350px">
+		<el-form  
+			:model="DriverAndVehicle">
+		 <el-form-item label="司机姓名"
+			:label-width="formLabelWidth"> <el-input size="small"
+			style="width:200px;" v-model="DriverAndVehicle.name" autocomplete="off">
+		</el-input> 
+		</el-form-item> 
+		<el-form-item label="手机号码" :label-width="formLabelWidth">
+		<el-input size="small" style="width:200px;" v-model="DriverAndVehicle.phone"
+			autocomplete="off"> </el-input>
+		 </el-form-item> 
+		 <el-form-item label="身份证号"
+			:label-width="formLabelWidth"> <el-input size="small"
+			style="width:200px;" v-model="DriverAndVehicle.idCard" autocomplete="off"></el-input>
+		</el-form-item>
+		<el-form-item label="车牌号码"
+			:label-width="formLabelWidth">
+			<el-autocomplete
+				size="small"
+				style="width:200px;"
+  				v-model="DriverAndVehicle.plate"
+  				:fetch-suggestions="searchVehicleAsync"
+ 				 @select="handleSelectVehicle"></el-autocomplete>
+		</el-form-item>
+		<el-form-item label="车辆类型"
+			:label-width="formLabelWidth"> <el-input size="small"
+			style="width:200px;" v-model="DriverAndVehicle.vehicleType" autocomplete="off"></el-input>
+		</el-form-item>
+		<el-form-item label="车辆所有人"
+			:label-width="formLabelWidth"> <el-input size="small"
+			style="width:200px;" v-model="DriverAndVehicle.owner" autocomplete="off"></el-input>
+		</el-form-item>
+		<el-form-item label="发动机号"
+			:label-width="formLabelWidth"> <el-input size="small"
+			style="width:200px;" v-model="DriverAndVehicle.engineNo" autocomplete="off"></el-input>
+		</el-form-item>
+		</el-form>
+		</el-aside>
+    	<el-main>
+    	<div style="float:right;width:500px;text-align: center;">
+    	<div>
+		<input  type="file" style="display: none;" id="img1"
+						accept="image/*" capture="camera" onchange="uploadImg(this.id)">
+		<img style="width: 48%; height: 200px;" src="../assets/img/add_img.png" id="pre1"  onclick="trigImg('img1')"> 
+		<br>
+		<span>驾驶证</span>
+		</div>
+		<div>
+		<input  type="file" style="display: none;" id="img2"
+						accept="image/*" capture="camera" onchange="uploadImg(this.id)">
+		<img style="width: 48%; height: 200px;" src="../assets/img/add_img.png" id="pre2"  onclick="trigImg('img2')">
+		<br> 
+		<span>行驶证</span>
+		</div>
+		</div>
+		</el-main>
+		</el-container>
+		<div slot="footer" class="dialog-footer">
+			<el-button @click="dialogShow = false">取 消</el-button>
+			<el-button type="primary" @click="handleConfirm()">确 定</el-button>
+		</div>
+		</el-dialog>
+	</div>
+	
+	<div id="outerdiv"
+				style="position: fixed; top: 0; left: 0; background: rgba(0, 0, 0, 0.7); z-index: 2; width: 100%; height: 100%; display: none;">
+				<div id="innerdiv" style="position: absolute;">
+					<img id="bigimg" style="border: 5px solid #fff;" src="" />
+				</div>
+			</div>
+
+</body>
+</html>
+
+<script>
+var app=null;
+$(function() {	
+app=new Vue({
+    el: '#app',
+	 methods: {
+			showBigImg:function(outerdiv, innerdiv, bigimg,src){
+				
+			        $(bigimg).attr("src", src);//设置#bigimg元素的src属性  
+			      
+			            /*获取当前点击图片的真实大小，并显示弹出层及大图*/  
+			        $("<img/>").attr("src", src).load(function(){  
+			            var windowW = $(window).width();//获取当前窗口宽度  
+			            var windowH = $(window).height();//获取当前窗口高度  
+			            var realWidth = this.width;//获取图片真实宽度  
+			            var realHeight = this.height;//获取图片真实高度  
+			            var imgWidth, imgHeight;  
+			            var scale = 0.8;//缩放尺寸，当图片真实宽度和高度大于窗口宽度和高度时进行缩放  
+			              
+			            if(realHeight>windowH*scale) {//判断图片高度  
+			                imgHeight = windowH*scale;//如大于窗口高度，图片高度进行缩放  
+			                imgWidth = imgHeight/realHeight*realWidth;//等比例缩放宽度  
+			                if(imgWidth>windowW*scale) {//如宽度扔大于窗口宽度  
+			                    imgWidth = windowW*scale;//再对宽度进行缩放  
+			                }  
+			            } else if(realWidth>windowW*scale) {//如图片高度合适，判断图片宽度  
+			                imgWidth = windowW*scale;//如大于窗口宽度，图片宽度进行缩放  
+			                            imgHeight = imgWidth/realWidth*realHeight;//等比例缩放高度  
+			            } else {//如果图片真实高度和宽度都符合要求，高宽不变  
+			                imgWidth = realWidth;  
+			                imgHeight = realHeight;  
+			            }  
+			                    $(bigimg).css("width",imgWidth);//以最终的宽度对图片缩放  
+			              
+			            var w = (windowW-imgWidth)/2;//计算图片与窗口左边距  
+			            var h = (windowH-imgHeight)/2;//计算图片与窗口上边距  
+			            $(innerdiv).css({"top":h, "left":w});//设置#innerdiv的top和left属性  
+			            $(outerdiv).fadeIn("fast");//淡入显示#outerdiv及.pimg  
+			        });  
+			          
+			        $(outerdiv).click(function(){//再次点击淡出消失弹出层  
+			            $(this).fadeOut("fast");  
+			        });  
+				
+				
+			},
+		 
+		 
+		 loadVehicle:function(){
+		    	formPost4Json("/driverAndVehicle/getVehicleList",
+						null, function(data, httpOptions,
+								status) {
+							if (checkErrorDatas(data,
+									httpOptions)) {
+								app.vehicleInfo=data.vehicleInfo;
+								
+							}
+						});
+		 },
+		 searchVehicleAsync(queryString, cb) {
+			 this.DriverAndVehicle.vehicleId="";
+		        var vehicle = this.vehicleInfo;
+		        var results = queryString ? vehicle.filter(this.createVehicleStateFilter(queryString)) : vehicle;
+		        for(var i=0;i<results.length;i++){
+		        	results[i].value=results[i].plate;
+		        }
+		        cb(results);
+		   },
+		   handleSelectVehicle(item) { 
+			  this.DriverAndVehicle.plate=item.plate;
+			  this.DriverAndVehicle.vehicleType=item.vehicleType;
+			  this.DriverAndVehicle.owner=item.owner;
+			  this.DriverAndVehicle.engineNo=item.engineNo;
+			  this.DriverAndVehicle.vehicleId=item.id;
+		   },
+		   createVehicleStateFilter(queryString) {
+		        return (state) => {
+		          return (state.plate.toLowerCase().indexOf(queryString.toLowerCase()) === 0);
+		        };
+		    },
+		 
+		 searchInfo:function(){
+			  this.pageHandler();
+		  },
+		  handleConfirm(){
+			  	if(!app.DriverAndVehicle.driverPhoto){
+			  		alert("请上传驾驶证照片!");
+			  		return ;
+			  	}
+			  	if(!app.DriverAndVehicle.vehicleCardPhoto){
+			  		alert("请上传行驶证照片!");
+			  		return ;
+			  	}
+			  	if(!app.DriverAndVehicle.name){
+			  		alert("请输入司机姓名!");
+			  		return ;
+			  	}
+			  	if(!app.DriverAndVehicle.phone){
+			  		alert("请输入手机号码!");
+			  		return ;
+			  	}
+			  	if(!app.DriverAndVehicle.idCard){
+			  		alert("请输入身份证号!");
+			  		return ;
+			  	}
+			  	if(!app.DriverAndVehicle.plate){
+			  		alert("请输入车牌号码!");
+			  		return ;
+			  	}
+			  	if(!app.DriverAndVehicle.vehicleType){
+			  		alert("请输入车辆类型!");
+			  		return ;
+			  	}
+			  	if(!app.DriverAndVehicle.owner){
+			  		alert("请输入所有人!");
+			  		return ;
+			  	}
+			  	if(!app.DriverAndVehicle.engineNo){
+			  		alert("请输入发动机号!");
+			  		return ;
+			  	}
+				var formData = app.DriverAndVehicle;
+				jsonPost4Json(
+						"/driverAndVehicle/insertOrUpdateDriverAndVehicle",
+						formData,
+						function(data, httpOptions, status) {
+							if (checkErrorDatas(data, httpOptions)) {
+								alert("操作成功");
+								app.pageHandler();
+								app.dialogShow=false;
+							}
+						});
+			},
+
+	
+	/**
+	* 表格行按钮点击事件
+	*/
+    handleClick(row) {
+		app.loadVehicle();
+		 if(!row){ 
+			 app.reset();
+		 }else{
+			 app.DriverAndVehicle=row;
+			 if(app.DriverAndVehicle.driverPhoto){
+					$('#pre1').attr('src', app.DriverAndVehicle.driverPhoto);
+			 }else{
+				 $('#pre1').attr('src', "../assets/img/add_img.png");
+			 }
+			 if(app.DriverAndVehicle.vehicleCardPhoto){
+					$('#pre2').attr('src', app.DriverAndVehicle.vehicleCardPhoto);
+			 }else{
+				 $('#pre2').attr('src', "../assets/img/add_img.png");
+			 }
+		 }
+		 this.dialogShow=true;
+		
+    },
+    showVehiclePhoto(row){
+  
+    	app.showBigImg('#outerdiv', '#innerdiv', '#bigimg',row.vehicleCardPhoto)
+    },
+    showDriverPhoto(row){
+    	app.showBigImg('#outerdiv', '#innerdiv', '#bigimg',row.driverPhoto)
+    },
+    
+    deleteRow(row) {
+    	
+		var sure=confirm("您确认要删除司机:"+row.name+"的信息？");
+		if(sure==true){
+			var formData = {
+					"id":row.id
+				}
+				formPost4Json(
+						"/driverAndVehicle/deleteDriverAndVehicle",
+						formData,
+						function(data, httpOptions, status) {
+							if (checkErrorDatas(data, httpOptions)) {
+								alert("操作成功");
+								app.pageHandler();
+							}
+						});
+		}
+		
+    },
+    /**
+	* 弹出框关闭事件
+	*/
+    handleClose() {
+    	app.dialogShow=false;
+      },
+      /**
+  	* 表格行选中事件
+  	*/
+      handleChange(val) { 
+    	  this.selectedRow=val;
+   	 },
+   	/**
+ 	* 分页pagesize变更事件
+ 	*/
+    handleSizeChange(val) {
+   		 this.pageSize=val;
+   		this.pageHandler();
+      },
+      /**
+      * 分页 页面变更事件
+      */
+      handleCurrentChange(val) {
+    	 this.currentPage=val;
+    	 this.pageHandler();
+      },
+      reset:function(){
+    	  app.DriverAndVehicle.id="";
+    	  app.DriverAndVehicle.name="";
+    	  app.DriverAndVehicle.phone="";
+    	  app.DriverAndVehicle.plate="";
+    	  app.DriverAndVehicle.idCard="";
+    	  app.DriverAndVehicle.vehicleType="";
+    	  app.DriverAndVehicle.owner="";
+    	  app.DriverAndVehicle.engineNo="";
+    	  app.DriverAndVehicle.vehicleId="";
+    	  app.DriverAndVehicle.vehicleCardPhoto="";
+    	  app.DriverAndVehicle.driverPhoto="";
+      },
+      pageHandler:function(){
+    		var formData = {
+					"currentPage" : this.currentPage,
+					"pageSize" : this.pageSize,
+					"plate" : $.trim(this.search.plate),
+					"name" : $.trim(this.search.name),
+					"phone" : $.trim(this.search.phone),
+					"organization": $.trim(this.search.organization)
+				};
+    		
+				jsonPost4Json(
+						"/driverAndVehicle/getDriverAndVehicleListList",
+						formData,
+						function(data, httpOptions, status) {
+							if (checkErrorDatas(data, httpOptions)) {
+								app.total=data.totalNum;
+								if(data.DriverAndVehicleList){
+									app.DriverAndVehicleList=data.DriverAndVehicleList;	
+								}
+							}
+						});
+      }
+    
+  },
+  created : function() {
+	  formPost4Json("/user/getUserInfo", null, function(data,
+				httpOptions, status) {
+			if (checkErrorDatas(data, httpOptions)) {
+				if (data.user) {
+					app.user = data.user;
+					app.search.organization=app.user.userPostVos[0].orgName;
+					app.pageHandler();//created  表示页面加载完毕，立即执行
+					
+				}
+			}
+		});
+	
+  },
+    data:{
+    	vehicleInfo:{},
+    	user:{},
+    	dialogShow:false,
+    	clickedRow:{},
+    	selectedRow:{},
+    	search:{
+    		plate:"",
+    		name:"",
+    		phone:"",
+    		organization:""
+    	},
+    	currentPage: 1,
+        pageSize:10,
+        total:1,
+        DriverAndVehicleList:[],
+        DriverAndVehicle:{
+        	id:"",
+        	name:"",
+        	phone:"",
+        	idCard:"",
+        	plate:"",
+        	vehicleType:"",
+        	owner:"",
+        	engineNo:"",
+        	vehicleId:""
+        },
+       
+        formLabelWidth: '120px'
+    }
+  })
+setCache2SessionStorage("currentUrl","/baseManager");
+});
+
+
+function uploadImg(inputId) {
+	var Orientation = null;//获取照片方向角属性，用户旋转控制
+	var file = document.getElementById(inputId).files[0];
+	EXIF.getData(file, function() {
+		EXIF.getAllTags(this);
+		Orientation = EXIF.getTag(this, 'Orientation');
+	});
+	var oReader = new FileReader();
+	oReader.onload = function(e) {
+		var image = new Image();
+		image.src = e.target.result;
+		image.onload = function() {
+			var expectWidth = this.naturalWidth;
+			var expectHeight = this.naturalHeight;
+			if (this.naturalWidth > this.naturalHeight
+					&& this.naturalWidth > 800) {
+				expectWidth = 800;
+				expectHeight = expectWidth * this.naturalHeight
+						/ this.naturalWidth;
+			} else if (this.naturalHeight > this.naturalWidth
+					&& this.naturalHeight > 1200) {
+				expectHeight = 1200;
+				expectWidth = expectHeight * this.naturalWidth
+						/ this.naturalHeight;
+			}
+			var canvas = document.createElement("canvas");
+			var ctx = canvas.getContext("2d");
+			canvas.width = expectWidth;
+			canvas.height = expectHeight;
+			ctx.drawImage(this, 0, 0, expectWidth, expectHeight);
+			var base64 = null;
+			//修复ios
+			if (navigator.userAgent.match(/iphone/i)) {
+				// console.log('iphone');
+				//如果方向角不为1，都需要进行旋转 added by lzk
+				if (Orientation != null && Orientation != 1) {
+					// alert('旋转处理');
+					switch (Orientation) {
+					case 6://需要顺时针（向左）90度旋转
+						// alert('需要顺时针（向左）90度旋转');
+						rotateImg(this, 'left', canvas);
+						break;
+					case 8://需要逆时针（向右）90度旋转
+						// alert('需要顺时针（向右）90度旋转');
+						rotateImg(this, 'right', canvas);
+						break;
+					case 3://需要180度旋转
+						// alert('需要180度旋转');
+						rotateImg(this, 'right', canvas);//转两次
+						rotateImg(this, 'right', canvas);
+						break;
+					}
+				}
+				base64 = canvas.toDataURL("image/jpeg", 0.8);
+			} else if (navigator.userAgent.match(/Android/i)) {// 修复android
+				base64 = e.target.result;
+			} else {
+				if (Orientation != null && Orientation != 1) {
+					switch (Orientation) {
+					case 6://需要顺时针（向左）90度旋转
+						// alert('需要顺时针（向左）90度旋转');
+						rotateImg(this, 'left', canvas);
+						break;
+					case 8://需要逆时针（向右）90度旋转
+						// alert('需要顺时针（向右）90度旋转');
+						rotateImg(this, 'right', canvas);
+						break;
+					case 3://需要180度旋转
+						// alert('需要180度旋转');
+						rotateImg(this, 'right', canvas);//转两次
+						rotateImg(this, 'right', canvas);
+						break;
+					}
+				}
+				base64 = canvas.toDataURL("image/jpeg", 0.8);
+			}
+			uploadFileByBase64("/file/uploadAndOcrCard/" + type, base64, function(path,data) {
+				if (inputId == "img1") {
+					
+					app.DriverAndVehicle.driverPhoto=path;
+					$('#pre1').attr('src', path);
+					app.DriverAndVehicle.name=data.driverAndVehicle.name;
+					app.DriverAndVehicle.idCard=data.driverAndVehicle.idCard;
+				} else if (inputId == "img2") {
+					app.DriverAndVehicle.vehicleCardPhoto=path;
+					$('#pre2').attr('src', path);
+					app.DriverAndVehicle.plate=data.driverAndVehicle.plate;
+					app.DriverAndVehicle.vehicleType=data.driverAndVehicle.vehicleType;
+					app.DriverAndVehicle.owner=data.driverAndVehicle.owner;
+					app.DriverAndVehicle.engineNo=data.driverAndVehicle.engineNo;
+				} 
+			});
+
+		};
+	};
+	oReader.readAsDataURL(file);
+}
+
+//对图片旋转处理 added by lzk
+function rotateImg(img, direction, canvas) {
+	//alert(img);
+	//最小与最大旋转方向，图片旋转4次后回到原方向
+	var min_step = 0;
+	var max_step = 3;
+	//var img = document.getElementById(pid);
+	if (img == null)
+		return;
+	//img的高度和宽度不能在img元素隐藏后获取，否则会出错
+	var height = img.height;
+	var width = img.width;
+	//var step = img.getAttribute('step');
+	var step = 2;
+	if (step == null) {
+		step = min_step;
+	}
+	if (direction == 'right') {
+		step++;
+		//旋转到原位置，即超过最大值
+		step > max_step && (step = min_step);
+	} else {
+		step--;
+		step < min_step && (step = max_step);
+	}
+	//旋转角度以弧度值为参数
+	var degree = step * 90 * Math.PI / 180;
+	var ctx = canvas.getContext('2d');
+	switch (step) {
+	case 0:
+		canvas.width = width;
+		canvas.height = height;
+		ctx.drawImage(img, 0, 0);
+		break;
+	case 1:
+		canvas.width = height;
+		canvas.height = width;
+		ctx.rotate(degree);
+		ctx.drawImage(img, 0, -height);
+		break;
+	case 2:
+		canvas.width = width;
+		canvas.height = height;
+		ctx.rotate(degree);
+		ctx.drawImage(img, -width, -height);
+		break;
+	case 3:
+		canvas.width = height;
+		canvas.height = width;
+		ctx.rotate(degree);
+		ctx.drawImage(img, -width, 0);
+		break;
+	}
+}
+
+var  type=2;
+function trigImg(inputId) {
+	if (inputId) {
+		if(inputId=="img1"){
+			type=2;
+		}
+		if(inputId=="img2"){
+			type=3;
+		}
+		$("#" + inputId).trigger("click");
+		return;
+	}
+}
+
+</script>

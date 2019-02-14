@@ -1,0 +1,65 @@
+package com.htkfood.service.impl;
+
+import java.util.List;
+import java.util.Map;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+import com.github.pagehelper.Page;
+import com.github.pagehelper.PageHelper;
+import com.github.pagehelper.util.StringUtil;
+import com.htkfood.entity.LogisticsEntity;
+import com.htkfood.entity.ReportDetailEntity;
+import com.htkfood.entity.ReportEntity;
+import com.htkfood.entity.UserEntity;
+import com.htkfood.entity.vo.SearchVo;
+import com.htkfood.exception.CommonException;
+import com.htkfood.exception.CommonExceptionHelper;
+import com.htkfood.mapper.Criteria;
+import com.htkfood.mapper.master.ReportMapper;
+import com.htkfood.service.LogisticsService;
+import com.htkfood.service.ReportService;
+@Service
+public class ReportServiceImpl implements ReportService {
+
+	@Autowired
+	private ReportMapper reportMapper;
+	@Autowired
+	private LogisticsService logisticsService;
+	@Override
+	public void getReport(UserEntity user,SearchVo model, Map<String, Object> result) throws CommonException {
+		Criteria criteria=new Criteria();
+		if (!StringUtil.isEmpty(model.getExpressCompany())) {
+			criteria.put("expressCompany", "%"+model.getExpressCompany()+"%");
+		}
+		if(StringUtil.isEmpty(model.getOrganization())) {
+			throw CommonExceptionHelper.commonException("请选择所属公司", null);
+		}
+		criteria.put("organization", model.getOrganization());
+		@SuppressWarnings("rawtypes")
+		Page page = PageHelper.startPage(model.getCurrentPage().intValue(), model.getPageSize().intValue(), true);
+		List<ReportEntity> list=reportMapper.getReport(criteria);
+		result.put("totalNum", page.getTotal());
+		result.put("reportList", list);
+	}
+	@Override
+	public void getReportDetail(UserEntity user, SearchVo model, Map<String, Object> result)throws CommonException{
+		Criteria criteria=new Criteria();
+		if(StringUtil.isEmpty(model.getOrganization())) {
+			throw CommonExceptionHelper.commonException("请选择所属公司", null);
+		}
+		criteria.put("organization", model.getOrganization());
+		if(StringUtil.isEmpty(model.getLogisticsNo())) {
+			throw CommonExceptionHelper.commonException("找不到信息，参数出错！", null);
+		}
+		LogisticsEntity logisticsEntity=logisticsService.getLogisticsByNo(user, model.getLogisticsNo());
+		criteria.put("expressCompany", logisticsEntity.getExpressCompany());
+		@SuppressWarnings("rawtypes")
+		Page page = PageHelper.startPage(model.getCurrentPage().intValue(), model.getPageSize().intValue(), true);
+		List<ReportDetailEntity> list=reportMapper.getReportDetail(criteria);
+		result.put("totalNum", page.getTotal());
+		result.put("reportList", list);
+	}
+
+}

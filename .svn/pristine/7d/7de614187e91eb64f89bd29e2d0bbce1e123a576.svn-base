@@ -1,0 +1,1 @@
+star ./jre1.8.0_101/bin/java -jar logistics-0.0.1-SNAPSHOT.jar 

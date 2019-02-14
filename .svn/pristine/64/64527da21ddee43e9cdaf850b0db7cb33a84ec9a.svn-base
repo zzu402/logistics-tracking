@@ -1,0 +1,95 @@
+package com.htkfood.service;
+
+import java.util.Map;
+import javax.servlet.http.HttpServletRequest;
+import com.htkfood.entity.LogisticsEntity;
+import com.htkfood.entity.UserEntity;
+import com.htkfood.entity.vo.SearchVo;
+import com.htkfood.exception.CommonException;
+
+public interface LogisticsService {
+	/*
+	 * 获得调度员的物流信息,结果保存在result
+	 */
+	void getLogisticsList(UserEntity user,SearchVo model,Map<String, Object>result)throws CommonException;
+	
+	/*
+	 * 根据物流单号获取物流信息
+	 */
+	void getLogisticsByNo(UserEntity user,String logisticsNo,Map<String, Object>result)throws CommonException;
+	
+	/*
+	 * 根据物流单号获取物流信息
+	 */
+	void queryLogistics(UserEntity user,String logisticsNo,String  t,Map<String, Object>result)throws CommonException;
+	
+	/*
+	 * 根据物流单号获取物流信息
+	 */
+	LogisticsEntity getLogisticsById(UserEntity user,Long logisticsId)throws CommonException;
+	
+	/*
+	 * 根据物流单号获取物流信息
+	 */
+	LogisticsEntity getLogisticsByNo(UserEntity user,String logisticsNo)throws CommonException;
+
+	/**
+	 * 更新
+	 * @param logisticsId
+	 * @param logisticsNo
+	 * @param organization
+	 * @param expressCompany
+	 * @param driverName
+	 * @param driverPhone
+	 * @throws CommonException
+	 */
+	void updateLogistics2(Long logisticsId,String logisticsNo,String organization,String expressCompany,String driverName,String driverPhone, String destination,
+			String expressId, String deliveryOrder,String client,String receiver,String receiverPhone,String receiveAddress,String employeeName,String employeePhone)throws CommonException;
+	
+	/**
+	 * 更新
+	 * @param logisticsId
+	 * @param logisticsNo
+	 * @param organization
+	 * @param expressCompany
+	 * @param driverName
+	 * @param driverPhone
+	 * @throws CommonException
+	 */
+	void updateLogistics(Long logisticsId,String logisticsNo,String organization,String expressCompany,String driverName,String driverPhone, String destination)throws CommonException;
+	/**
+	 * 新增
+	 * @param logisticsNo
+	 * @param organization
+	 * @param expressCompany
+	 * @param driverName
+	 * @param driverPhone
+	 * @throws CommonException
+	 */
+	void addLogistics(UserEntity user,String logisticsNo,String organization,String expressCompany,String driverName,String driverPhone,String destination)throws CommonException;
+	/**
+	 * 删除
+	 * @param logisticsId
+	 * @throws CommonException
+	 */
+	void deleteLogistics(Long logisticsId)throws CommonException;
+	/**
+	 * 删除
+	 * @param logisticsId
+	 * @throws CommonException
+	 */
+	void deleteLogistics2(Long logisticsId,Long expressId)throws CommonException;
+	
+	/**
+	 * 派车
+	 * @param logisticsId
+	 * @throws CommonException
+	 */
+	String dispatchCar(Long  logisticsId,HttpServletRequest request)throws CommonException;
+	/**
+	 * 修改物流状态
+	 * @param logisticsId
+	 * @throws CommonException
+	 */
+	void updateStatus(Long  logisticsId,Integer status,Long expressId)throws CommonException;
+}

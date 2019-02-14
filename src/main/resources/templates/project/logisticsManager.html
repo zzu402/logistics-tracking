@@ -1,0 +1,3046 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>回头客物流跟踪系统</title>
+<link rel="stylesheet" href="../assets/css/bootstrap.css" />
+<link rel="stylesheet" href="../assets/css/css.css" />
+<link rel="stylesheet" href="../assets/css/dialog.css" />
+<link rel="stylesheet" href="../assets/css/pagination.css" />
+<script src="../assets/js/jquery-1.10.2.js"></script>
+<script src="../assets/js/bootstrap.min.js"></script>
+<script src="../assets/js/httpUtil.js"></script>
+<script src="../assets/js/common.js"></script>
+<script src="../assets/js/vue.js"></script>
+<script src="../assets/js/dialog.js"></script>
+<script src="../assets/js/clipboard.js"></script>
+<script src="../assets/js/clipboard.min.js"></script>
+<script src="../assets/js/clipboard-action.js"></script>
+<script src="../assets/js/jquery.pagination.js"></script>
+<script language="javascript" type="text/javascript"
+	src="../assets/My97DatePicker/WdatePicker.js"></script>
+<script language="javascript" src="../assets/clodop/LodopFuncs.js"></script>
+<object id="LODOP_OB"
+	classid="clsid:2105C259-1E0C-4534-8141-A753534CB4CA" width=0 height=0>
+	<embed id="LODOP_EM" type="application/x-print-lodop" width=0 height=0></embed>
+</object>
+
+<style type="text/css">
+[v-cloak] {
+	display: none !important;
+}
+</style>
+</head>
+<body>
+	<div class="title_right">
+		<strong>物流管理</strong>
+	</div>
+	<div id="app" v-cloak>
+		<div style="width: 98%; margin: auto;">
+			<div style="margin-bottom: 20px; width: 100%">
+				<div>
+					<span>所属组织:</span> <select
+						style="width: 160px; height: 27px; font-size: 12px;"
+						@change="searchLogistics()" v-model="search.organization">
+						<option v-for="post  in user.userPostVos" :value="post.orgName">{{post.orgName}}</option>
+					</select> <span>物流单号:</span> <input style="width: 100px; font-size: 12px;"
+						v-model="search.logisticsNo" type="text" class="span1-1" /> <span>承运单位:</span>
+					<input v-model="search.expressCompany"
+						style="width: 100px; font-size: 12px;" type="text" class="span1-1" />
+					<span>发货单号:</span> <input style="width: 100px; font-size: 12px;"
+						v-model="search.deliveryOrder" type="text" class="span1-1" /> <span>客户:</span>
+					<input v-model="search.client"
+						style="width: 100px; font-size: 12px;" type="text" class="span1-1" />
+					<span>收货地址:</span> <input v-model="search.address"
+						style="width: 100px; font-size: 12px;" type="text" class="span1-1" />
+
+					<div style="float: right; magrin-left: 5px">
+						<input type="button" v-if="isDispatcher" value="叫车"
+							@click="showAdd()" /> <input @click="showEdit()"
+							v-if="isDispatcher" type="button" value="编辑" /> <input
+							@click="deleteRow()" v-if="isDispatcher" type="button" value="删除" /><input
+							@click="queryUrl()" type="button" value="链接"
+							style="margin-left: 2px;" /> <input @click="queryNode()"
+							type="button" value="节点" /> <input @click="exprortLogistics()"
+							type="button" value="导出" /> <input @click="showPrint()"
+							type="button" value="协议套打" />
+							<input @click="showLocation()"
+							type="button" value="调节协议位置" />
+							<input @click="showEnvelop()"
+							type="button" value="调节信封位置" />
+							<input onclick="javascript:CheckIsInstall()"
+							type="button" value="查看套打控件" />
+					</div>
+				</div>
+				<div style="margin-top: 10px;">
+					<span>时间类型:</span> <select v-model="search.timeType"
+						style="width: 110px; height: 27px; font-size: 12px;">
+						<option value="-1">请选择</option>
+						<option value="0">创建时间</option>
+						<option value="1">通知司机时间</option>
+						<option value="2">到厂时间</option>
+						<option value="3">发货时间</option>
+						<option value="4">出厂时间</option>
+						<option value="5">送达时间</option>
+					</select> <span>起始时间:</span> <input class="Wdate" type="text"
+						style="width: 120px; height: 18px; font-size: 12px;"
+						v-model="search.beginTime"
+						onClick="WdatePicker({el:this,dateFmt:'yyyy-MM-dd',onpicked:function(dp){app.search.beginTime = dp.cal.getNewDateStr()},oncleared:function(dp){app.search.beginTime='';}})">
+					    <span>结束时间:</span> <input class="Wdate"
+						type="text" style="width: 120px; height: 18px; font-size: 12px;"
+						v-model="search.endTime"
+						onClick="WdatePicker({el:this,dateFmt:'yyyy-MM-dd',onpicked:function(dp){app.search.endTime = dp.cal.getNewDateStr()},oncleared:function(dp){app.search.endTime='';}})">
+						<span>运输状态:</span> <select
+							v-model="search.logisticsStatus"
+							style="width: 65px; height: 27px; font-size: 12px;">
+								<option value="-1">请选择</option>
+								<option value="0">新建</option>
+								<option value="1">已派车</option>
+								<option value="2">已进厂</option>
+								<option value="3">已装载</option>
+								<option value="4">已出厂</option>
+								<option value="5">已送达</option>
+								<option value="6">已评价</option>
+						</select> <input style="magin-left: 5px; magin-right: 5px" type="button"
+							@click="searchLogistics()" value="查询" /><input type="button"
+							style="margin-left: 2px;" @click="reset()" value="重置" />
+				</div>
+
+
+
+			</div>
+			<div id="table_outner_div"
+				style="width: 100%; height: 700px; overflow: auto">
+				<table class="table table-bordered" id="mtable"
+					style="overflow: hidden; table-layout: fixed; width: 100%;">
+					<thead>
+						<tr id="topic">
+							<th style="width: 3%" align="center" nowrap="nowrap" d="#f1f1f1">选框</th>
+							<th style="width: 6%" align="center" nowrap="nowrap"
+								bgcolor="#f1f1f1">调度员</th>
+							<th style="width: 11%" align="center" nowrap="nowrap"
+								bgcolor="#f1f1f1">物流单号</th>
+							<th style="width: 11%" align="center" nowrap="nowrap"
+								bgcolor="#f1f1f1">送货地点</th>
+							<th style="width: 14%" align="center" nowrap="nowrap"
+								bgcolor="#f1f1f1">承运单位</th>
+							<th style="width: 6%" align="center" nowrap="nowrap"
+								bgcolor="#f1f1f1">物流联系人</th>
+							<th style="width: 9%" align="center" nowrap="nowrap"
+								bgcolor="#f1f1f1">联系人电话</th>
+							<th style="width: 6%" align="center" nowrap="nowrap"
+								bgcolor="#f1f1f1">司机</th>
+							<th style="width: 9%" align="center" nowrap="nowrap"
+								bgcolor="#f1f1f1">司机电话</th>
+							<th style="width: 11%" align="center" nowrap="nowrap"
+								bgcolor="#f1f1f1">发货单号</th>
+							<th style="width: 11%" align="center" nowrap="nowrap"
+								bgcolor="#f1f1f1">客户</th>
+							<th style="width: 5%" align="center" nowrap="nowrap"
+								bgcolor="#f1f1f1">收货人</th>
+							<th style="width: 9%" align="center" nowrap="nowrap"
+								bgcolor="#f1f1f1">联系电话</th>
+							<th style="width: 18%" align="center" nowrap="nowrap"
+								bgcolor="#f1f1f1">收货地址</th>
+							<th style="width: 5%" align="center" nowrap="nowrap"
+								bgcolor="#f1f1f1">业务员</th>
+							<th style="width: 9%" align="center" nowrap="nowrap"
+								bgcolor="#f1f1f1">业务员电话</th>
+							<th style="width: 7%" align="center" nowrap="nowrap"
+								bgcolor="#f1f1f1">创建时间</th>
+							<th style="width: 5%" align="center" nowrap="nowrap"
+								bgcolor="#f1f1f1">状态</th>
+							<th style="width: 6%" align="center" nowrap="nowrap"
+								bgcolor="#f1f1f1">操作</th>
+						</tr>
+					</thead>
+					<tbody>
+						<tr v-for="(logistics,index) in logisticsList">
+							<td v-cloak align="center"><input type="checkbox"
+								onclick="checkboxOnclick(this)" name="check" :id="index" /></td>
+							<td v-cloak align="center">{{logistics.logisticsEntity.userName}}</td>
+							<td v-cloak align="center">{{logistics.logisticsEntity.logisticsNo}}</td>
+							<td v-cloak align="center">{{logistics.logisticsEntity.destination}}</td>
+							<td v-cloak align="center">{{logistics.logisticsEntity.expressCompany}}</td>
+							<td v-cloak align="center">{{logistics.logisticsEntity.driverName}}</td>
+							<td v-cloak align="center">{{logistics.logisticsEntity.driverPhone}}</td>
+							<td v-cloak align="center">{{logistics.logisticsEntity.name}}</td>
+							<td v-cloak align="center">{{logistics.logisticsEntity.phone}}</td>
+							<td v-cloak align="center">{{logistics.expressEntity.deliveryOrder}}</td>
+							<td v-cloak align="center">{{logistics.expressEntity.client}}</td>
+							<td v-cloak align="center">{{logistics.expressEntity.receiver}}</td>
+							<td v-cloak align="center">{{logistics.expressEntity.receiverPhone}}</td>
+							<td v-cloak align="center">{{logistics.expressEntity.receiveAddress}}</td>
+							<td v-cloak align="center">{{logistics.expressEntity.employeeName}}</td>
+							<td v-cloak align="center">{{logistics.expressEntity.employeePhone}}</td>
+							<td v-cloak align="center">{{logistics.logisticsEntity.createTime
+								| time}}</td>
+							<td v-cloak align="center">{{logistics|logisticsStatus}}</td>
+							<td v-cloak align="center"><a
+								v-if="logistics.logisticsEntity.logisticsStatus==2 && isDispatcher"
+								@click="showAddDriver(index)">发货通知</a> <a
+								v-if="logistics.logisticsEntity.logisticsStatus==0 && isDispatcher"
+								@click="dispatchCar(index)">通知司机</a> <a
+								v-if="logistics.logisticsEntity.logisticsStatus>=4 && logistics.expressEntity.status==2 && isDispatcher"
+								@click=queryComment(index)>查看评价</a></td>
+						</tr>
+					</tbody>
+				</table>
+			</div>
+			<div align="center">
+				<div class="m-style M-box"></div>
+			</div>
+
+		</div>
+
+		<div class="ui-mask" id="mask" onselectstart="return false"></div>
+
+		<div class="ui-dialog" id="addshow" onselectstart='return false;'>
+			<div class="ui-dialog-title" id="dialogDrag"
+				onselectstart="return false;">
+				物流信息 <a class="ui-dialog-closebutton" @click="hideDiv('addshow')"></a>
+
+			</div>
+			<div class="ui-dialog-content">
+				<div class="ui-dialog-l40">
+					<span class="ui-dialog-span"><span style="color: red;">&emsp;*</span>所属组织:</span>
+					<select style="height: 28px; width: 164px; margin-left: 5px"
+						id="selectOrg" v-model="addLogistics.organization">
+						<option v-for="post  in user.userPostVos" :value="post.orgName">{{post.orgName}}</option>
+					</select>
+				</div>
+				<div class="ui-dialog-l40">
+					<span class="ui-dialog-span"><span style="margin-left: 6px;"></span>&emsp;物流单号:</span><input
+						class="ui-dialog-input" v-model="addLogistics.logisticsNo"
+						type="text" />
+				</div>
+				<div class="ui-dialog-l40">
+					<span class="ui-dialog-span"><span style="color: red;">&emsp;*</span>送货地点:</span><input
+						class="ui-dialog-input" v-model="addLogistics.destination"
+						type="text" />
+				</div>
+				<div class="ui-dialog-l40">
+					<span class="ui-dialog-span"><span style="color: red;">&emsp;*</span>物流公司:</span><input
+						class="ui-dialog-input" id="wlgs" @click="show('wlpp')"
+						v-model="addLogistics.expressCompany" type="text" />
+					<div class="items" id="wlpp" @mouseleave="hide('wlpp')">
+						<li class="li_item" v-for="(company,index) in companies"
+							@click="selectCompany(index)">{{company.expressCompany}}</li>
+						<div align="center">
+							<div class="m-style1 M-box1"></div>
+						</div>
+					</div>
+				</div>
+				<div class="ui-dialog-l40">
+					<span class="ui-dialog-span" ><span style="color: red;">*</span>物流联系人:</span><input
+						@click="show('sjpp')" class="ui-dialog-input"
+						v-model="addLogistics.driverName" type="text" />
+					<div class="items" id="sjpp" @mouseleave="hide('sjpp')">
+						<li class="li_item" v-for="(driver,index) in drivers"
+							@click="selectDriver(index)">{{driver.driverName}}</li>
+					</div>
+				</div>
+				<div class="ui-dialog-l40">
+					<span class="ui-dialog-span"><span style="color: red;">*</span>联系人电话:</span><input
+						class="ui-dialog-input" v-model="addLogistics.driverPhone"
+						type="text" />
+				</div>
+				<div>
+					<a class="ui-dialog-submit" @click="add()">叫车</a>
+				</div>
+			</div>
+		</div>
+		
+		
+		<div class="ui-dialog" id="adddrivershow" onselectstart='return false;'>
+			<div class="ui-dialog-title" id="dialogDrag"
+				onselectstart="return false;">
+				添加送货司机信息 <a class="ui-dialog-closebutton" @click="hideDiv('adddrivershow')"></a>
+			</div>
+			<div class="ui-dialog-content">
+				<div class="ui-dialog-l40">
+					<span class="ui-dialog-span"><span style="color: red;">*</span>司机姓名:</span><input
+						@click="show('sjpp2')" class="ui-dialog-input"
+						v-model="addDriver.driverName" type="text" />
+					<div class="items" id="sjpp2" @mouseleave="hide('sjpp2')">
+						<li class="li_item" v-for="(driver,index) in drivers2"
+							@click="selectDriver2(index)">{{driver.name}}</li>
+						<div align="center">
+							<div class="m-style1 M-box1"></div>
+						</div>
+					</div>
+				</div>
+				<div class="ui-dialog-l40">
+					<span class="ui-dialog-span"><span style="color: red;">*</span>身份证号:</span><input
+						class="ui-dialog-input" v-model="addDriver.idCard"
+						type="text" />
+				</div>
+				<div class="ui-dialog-l40">
+					<span class="ui-dialog-span"><span style="color: red;">*</span>司机电话:</span><input
+						class="ui-dialog-input" v-model="addDriver.driverPhone"
+						type="text" />
+				</div>
+				<div class="ui-dialog-l40">
+					<span class="ui-dialog-span"><span style="color: red;">*</span>车牌号码:</span><input
+						class="ui-dialog-input" v-model="addDriver.plate"
+						type="text"  @click="show('clpp')"  />
+					<div class="items" id="clpp" @mouseleave="hide('clpp')">
+						<li class="li_item" v-for="(vehicle,index) in vehicles"
+							@click="selectVehicle(index)">{{vehicle.plate}}</li>
+						<div align="center">
+							<div class="m-style1 M-box1"></div>
+						</div>
+					</div>
+				</div>
+					<div class="ui-dialog-l40">
+					<span class="ui-dialog-span"><span style="color: red;">*</span>车辆类型:</span><input
+						class="ui-dialog-input" v-model="addDriver.vehicleType"
+						type="text" />
+				</div>
+				<div class="ui-dialog-l40">
+					<span class="ui-dialog-span"><span style="color: red;">*</span>发送机号:</span><input
+						class="ui-dialog-input" v-model="addDriver.engineNo"
+						type="text" />
+				</div>
+				<div>
+					<a class="ui-dialog-submit" @click="editDriver()">提交</a>
+				</div>
+			</div>
+		</div>
+
+		<div class="ui-dialog" id="addstatus" onselectstart='return false;'>
+			<div class="ui-dialog-title" id="dialogDrag"
+				onselectstart="return false;">
+				派车通知 <a class="ui-dialog-closebutton" @click="hideDiv('addstatus')"></a>
+
+			</div>
+
+			<div class="ui-dialog-content">
+				<div class="ui-dialog-l40">
+					<span>{{smsResult}}</span>
+				</div>
+				<div class="ui-dialog-l40">
+					<input id="foo"
+						style="width: 280px; background: #00000000; border: none;"
+						v-model="targetUrl" readonly="readonly" />
+					<button class="btn" data-clipboard-target="#foo">复制</button>
+
+				</div>
+
+			</div>
+
+		</div>
+		<div class="ui-dialog" id="printshow" onselectstart='return false;'>
+			<div class="ui-dialog-title" id="dialogDrag"
+				onselectstart="return false;">
+				运输协议套打 <a class="ui-dialog-closebutton"
+					@click="hideDiv('printshow')"></a>
+			</div>
+			<div class="ui-dialog-content">
+
+				<div class="ui-dialog-l40">
+					<a href="javascript:;" onclick="javascript:printPagePreview();">协议打印预览</a>
+				</div>
+
+				<div class="ui-dialog-l40">
+					<a href="javascript:;" onclick="javascript:design();">协议打印设计</a>
+				</div>
+				
+				<div class="ui-dialog-l40">
+					<a href="javascript:;" onclick="javascript:envelopPreview();">信封打印预览</a>
+				</div>
+				
+				<div class="ui-dialog-l40">
+					<a href="javascript:;" onclick="javascript:envelopDesign();">信封打印设计</a>
+				</div>
+
+
+			</div>
+		</div>
+		
+		<div class="ui-dialog" style="width:1000px;" id="envelopshow" onselectstart='return false;'>
+			<div class="ui-dialog-title" id="dialogDrag"
+				onselectstart="return false;">
+				信封坐标调节 <a class="ui-dialog-closebutton"
+					@click="hideDiv('envelopshow')"></a>
+			</div>
+			<div class="ui-dialog-content">
+				<div class="ui-dialog-l40">
+					<span style="margin-left: 6px;">客户名称&nbsp;&nbsp;顶点&nbsp; </span>
+					<input style="width:50px;"
+						v-model="envelop.client.top"
+						type="text" />
+					<span>左边&nbsp;</span><input style="width:50px;"
+						v-model="envelop.client.left"
+						type="text" />
+					<span>宽度&nbsp;</span><input style="width:50px;"
+						v-model="envelop.client.width"
+						type="text" />
+					<span>高度&nbsp;</span><input style="width:50px;"
+						v-model="envelop.client.height"
+						type="text" />
+					<span style="float:right">
+					<span style="margin-left: 6px;">&nbsp;&nbsp;收货人和号码&nbsp;&nbsp;顶点&nbsp; </span>
+					<input style="width:50px;"
+						v-model="envelop.receiver.top"
+						type="text" />
+					<span>左边&nbsp;</span><input style="width:50px;"
+						v-model="envelop.receiver.left"
+						type="text" />
+					<span>宽度&nbsp;</span><input style="width:50px;"
+						v-model="envelop.receiver.width"
+						type="text" />
+					<span>高度&nbsp;</span><input style="width:50px;"
+						v-model="envelop.receiver.height"
+						type="text" />
+					</span>
+				</div>
+				<div class="ui-dialog-l40">
+					<span style="margin-left: 6px;">收货地址&nbsp;&nbsp;顶点&nbsp; </span>
+					<input style="width:50px;"
+						v-model="envelop.address.top"
+						type="text" />
+					<span>左边&nbsp;</span><input style="width:50px;"
+						v-model="envelop.address.left"
+						type="text" />
+					<span>宽度&nbsp;</span><input style="width:50px;"
+						v-model="envelop.address.width"
+						type="text" />
+					<span>高度&nbsp;</span><input style="width:50px;"
+						v-model="envelop.address.height"
+						type="text" />
+					<span style="float:right">
+					<span style="margin-left: 6px;">&nbsp;&nbsp;备注&nbsp;&nbsp;顶点&nbsp; </span>
+					<input style="width:50px;"
+						v-model="envelop.mark.top"
+						type="text" />
+					<span>左边&nbsp;</span><input style="width:50px;"
+						v-model="envelop.mark.left"
+						type="text" />
+					<span>宽度&nbsp;</span><input style="width:50px;"
+						v-model="envelop.mark.width"
+						type="text" />
+					<span>高度&nbsp;</span><input style="width:50px;"
+						v-model="envelop.mark.height"
+						type="text" />
+						</span>
+				</div>
+				<div class="ui-dialog-l40">
+						<span>字体大小&nbsp;</span><input style="width:50px;"
+						v-model="envelop.fontSize"
+						type="text" />
+						</span>
+						<span style="float:right">
+							<button onclick="saveEnvelop2Local()">提交</button>
+							<button @click="showEnvelopShibie()">根据代码生成坐标信息</button>
+						</span>
+				
+				</div>
+			</div>
+		</div>
+		
+		
+			<div class="ui-dialog" style="height:500px;z-index:100000;" id="shibieshow" onselectstart='return false;'>
+			<div class="ui-dialog-title" id="dialogDrag"
+				onselectstart="return false;">
+				代码位置识别<a class="ui-dialog-closebutton" @click="hideDiv('shibieshow')"></a>
+			</div>
+			<div class="ui-dialog-content">
+			    	<span class="ui-dialog-span">位置代码:</span>
+				<div class="ui-dialog-l40">
+				
+					<textarea rows="15" cols="90" v-model="sourceLocation">
+					</textarea>
+					<a style="margin-top:30px;"class="ui-dialog-submit" @click="shibie()">识别</a>
+				</div>
+			</div>
+		</div>
+		
+		
+			<div class="ui-dialog" style="width:920px;overflow:auto;height:100%;" id="locationshow" onselectstart='return false;'>
+			<div class="ui-dialog-title" id="dialogDrag"
+				onselectstart="return false;">
+				协议坐标调节 <a class="ui-dialog-closebutton"
+					@click="hideDiv('locationshow')"></a>
+			</div>
+			<div class="ui-dialog-content"  >
+				<div class="ui-dialog-l40">
+					<span style="margin-left: 6px;">承运商1&nbsp;&nbsp;顶点&nbsp; </span>
+					<input style="width:50px;"
+						v-model="location.carrier.top"
+						type="text" />
+					<span>左边&nbsp;</span><input style="width:50px;"
+						v-model="location.carrier.left"
+						type="text" />
+					<span>宽度&nbsp;</span><input style="width:50px;"
+						v-model="location.carrier.width"
+						type="text" />
+					<span>高度&nbsp;</span><input style="width:50px;"
+						v-model="location.carrier.height"
+						type="text" />
+					<span style="float:right">
+					<span style="margin-left: 6px;">&nbsp;&nbsp;销售组织1&nbsp;&nbsp;顶点&nbsp; </span>
+					<input style="width:50px;"
+						v-model="location.saler.top"
+						type="text" />
+					<span>左边&nbsp;</span><input style="width:50px;"
+						v-model="location.saler.left"
+						type="text" />
+					<span>宽度&nbsp;</span><input style="width:50px;"
+						v-model="location.saler.width"
+						type="text" />
+					<span>高度&nbsp;</span><input style="width:50px;"
+						v-model="location.saler.height"
+						type="text" />
+					</span>
+				</div>
+				<div class="ui-dialog-l40">
+					<span style="margin-left: 6px;">&nbsp; 运单号&nbsp;&nbsp;顶点&nbsp; </span>
+					<input style="width:50px;"
+						v-model="location.billNo.top"
+						type="text" />
+					<span>左边&nbsp;</span><input style="width:50px;"
+						v-model="location.billNo.left"
+						type="text" />
+					<span>宽度&nbsp;</span><input style="width:50px;"
+						v-model="location.billNo.width"
+						type="text" />
+					<span>高度&nbsp;</span><input style="width:50px;"
+						v-model="location.billNo.height"
+						type="text" />
+					<span style="float:right">
+					<span style="margin-left: 6px;">&nbsp;&nbsp;始发地&nbsp;&nbsp;顶点&nbsp; </span>
+					<input style="width:50px;"
+						v-model="location.startPoint.top"
+						type="text" />
+					<span>左边&nbsp;</span><input style="width:50px;"
+						v-model="location.startPoint.left"
+						type="text" />
+					<span>宽度&nbsp;</span><input style="width:50px;"
+						v-model="location.startPoint.width"
+						type="text" />
+					<span>高度&nbsp;</span><input style="width:50px;"
+						v-model="location.startPoint.height"
+						type="text" />
+						</span>
+				</div>
+				<div class="ui-dialog-l40">
+					<span style="margin-left: 6px;">&nbsp; 目的地&nbsp;&nbsp;顶点&nbsp; </span>
+					<input style="width:50px;"
+						v-model="location.endPoint.top"
+						type="text" />
+					<span>左边&nbsp;</span><input style="width:50px;"
+						v-model="location.endPoint.left"
+						type="text" />
+					<span>宽度&nbsp;</span><input style="width:50px;"
+						v-model="location.endPoint.width"
+						type="text" />
+					<span>高度&nbsp;</span><input style="width:50px;"
+						v-model="location.endPoint.height"
+						type="text" />
+						<span style="float:right">
+					<span style="margin-left: 6px;">&nbsp;&nbsp;运输费用&nbsp;&nbsp;顶点&nbsp; </span>
+					<input style="width:50px;"
+						v-model="location.transportationCost.top"
+						type="text" />
+					<span>左边&nbsp;</span><input style="width:50px;"
+						v-model="location.transportationCost.left"
+						type="text" />
+					<span>宽度&nbsp;</span><input style="width:50px;"
+						v-model="location.transportationCost.width"
+						type="text" />
+					<span>高度&nbsp;</span><input style="width:50px;"
+						v-model="location.transportationCost.height"
+						type="text" />
+						</span>
+				</div>
+				<div class="ui-dialog-l40">
+					<span style="margin-left: 6px;">&nbsp; &nbsp; &nbsp; &nbsp; &nbsp;万&nbsp;&nbsp;顶点&nbsp; </span>
+					<input style="width:50px;"
+						v-model="location.wan.top"
+						type="text" />
+					<span>左边&nbsp;</span><input style="width:50px;"
+						v-model="location.wan.left"
+						type="text" />
+					<span>宽度&nbsp;</span><input style="width:50px;"
+						v-model="location.wan.width"
+						type="text" />
+					<span>高度&nbsp;</span><input style="width:50px;"
+						v-model="location.wan.height"
+						type="text" />
+						<span style="float:right">
+					<span style="margin-left: 6px;">&nbsp;&nbsp;千&nbsp;&nbsp;顶点&nbsp; </span>
+					<input style="width:50px;"
+						v-model="location.qian.top"
+						type="text" />
+					<span>左边&nbsp;</span><input style="width:50px;"
+						v-model="location.qian.left"
+						type="text" />
+					<span>宽度&nbsp;</span><input style="width:50px;"
+						v-model="location.qian.width"
+						type="text" />
+					<span>高度&nbsp;</span><input style="width:50px;"
+						v-model="location.qian.height"
+						type="text" />
+						</span>
+				</div>
+				<div class="ui-dialog-l40">
+					<span style="margin-left: 6px;">&nbsp; &nbsp; &nbsp; &nbsp; &nbsp;百&nbsp;&nbsp;顶点&nbsp; </span>
+					<input style="width:50px;"
+						v-model="location.bai.top"
+						type="text" />
+					<span>左边&nbsp;</span><input style="width:50px;"
+						v-model="location.bai.left"
+						type="text" />
+					<span>宽度&nbsp;</span><input style="width:50px;"
+						v-model="location.bai.width"
+						type="text" />
+					<span>高度&nbsp;</span><input style="width:50px;"
+						v-model="location.bai.height"
+						type="text" />
+						<span style="float:right">
+					<span style="margin-left: 6px;">&nbsp;&nbsp;十&nbsp;&nbsp;顶点&nbsp; </span>
+					<input style="width:50px;"
+						v-model="location.shi.top"
+						type="text" />
+					<span>左边&nbsp;</span><input style="width:50px;"
+						v-model="location.shi.left"
+						type="text" />
+					<span>宽度&nbsp;</span><input style="width:50px;"
+						v-model="location.shi.width"
+						type="text" />
+					<span>高度&nbsp;</span><input style="width:50px;"
+						v-model="location.shi.height"
+						type="text" />
+						</span>
+				</div>
+				<div class="ui-dialog-l40">
+					<span style="margin-left: 6px;">&nbsp; &nbsp; &nbsp; &nbsp; &nbsp;个&nbsp;&nbsp;顶点&nbsp; </span>
+					<input style="width:50px;"
+						v-model="location.ge.top"
+						type="text" />
+					<span>左边&nbsp;</span><input style="width:50px;"
+						v-model="location.ge.left"
+						type="text" />
+					<span>宽度&nbsp;</span><input style="width:50px;"
+						v-model="location.ge.width"
+						type="text" />
+					<span>高度&nbsp;</span><input style="width:50px;"
+						v-model="location.ge.height"
+						type="text" />
+						<span style="float:right">
+					<span style="margin-left: 6px;">&nbsp;&nbsp;角&nbsp;&nbsp;顶点&nbsp; </span>
+					<input style="width:50px;"
+						v-model="location.jiao.top"
+						type="text" />
+					<span>左边&nbsp;</span><input style="width:50px;"
+						v-model="location.jiao.left"
+						type="text" />
+					<span>宽度&nbsp;</span><input style="width:50px;"
+						v-model="location.jiao.width"
+						type="text" />
+					<span>高度&nbsp;</span><input style="width:50px;"
+						v-model="location.jiao.height"
+						type="text" />
+						</span>
+				</div>
+				<div class="ui-dialog-l40">
+					<span style="margin-left: 6px;">&nbsp; &nbsp; &nbsp; &nbsp; &nbsp;分&nbsp;&nbsp;顶点&nbsp; </span>
+					<input style="width:50px;"
+						v-model="location.fen.top"
+						type="text" />
+					<span>左边&nbsp;</span><input style="width:50px;"
+						v-model="location.fen.left"
+						type="text" />
+					<span>宽度&nbsp;</span><input style="width:50px;"
+						v-model="location.fen.width"
+						type="text" />
+					<span>高度&nbsp;</span><input style="width:50px;"
+						v-model="location.fen.height"
+						type="text" />
+						<span style="float:right">
+					<span style="margin-left: 6px;">&nbsp;&nbsp;收货人&nbsp;&nbsp;顶点&nbsp; </span>
+					<input style="width:50px;"
+						v-model="location.receiver.top"
+						type="text" />
+					<span>左边&nbsp;</span><input style="width:50px;"
+						v-model="location.receiver.left"
+						type="text" />
+					<span>宽度&nbsp;</span><input style="width:50px;"
+						v-model="location.receiver.width"
+						type="text" />
+					<span>高度&nbsp;</span><input style="width:50px;"
+						v-model="location.receiver.height"
+						type="text" />
+						</span>
+				</div>
+				<div class="ui-dialog-l40">
+					<span style="margin-left: 6px;">&nbsp; &nbsp; &nbsp;电话&nbsp;&nbsp;顶点&nbsp; </span>
+					<input style="width:50px;"
+						v-model="location.receivePhone.top"
+						type="text" />
+					<span>左边&nbsp;</span><input style="width:50px;"
+						v-model="location.receivePhone.left"
+						type="text" />
+					<span>宽度&nbsp;</span><input style="width:50px;"
+						v-model="location.receivePhone.width"
+						type="text" />
+					<span>高度&nbsp;</span><input style="width:50px;"
+						v-model="location.receivePhone.height"
+						type="text" />
+						<span style="float:right">
+					<span style="margin-left: 6px;">&nbsp;&nbsp;地址&nbsp;&nbsp;顶点&nbsp; </span>
+					<input style="width:50px;"
+						v-model="location.receiveAddress.top"
+						type="text" />
+					<span>左边&nbsp;</span><input style="width:50px;"
+						v-model="location.receiveAddress.left"
+						type="text" />
+					<span>宽度&nbsp;</span><input style="width:50px;"
+						v-model="location.receiveAddress.width"
+						type="text" />
+					<span>高度&nbsp;</span><input style="width:50px;"
+						v-model="location.receiveAddress.height"
+						type="text" />
+						</span>
+				</div>
+				<div class="ui-dialog-l40">
+					<span style="margin-left: 6px;">&nbsp; &nbsp; &nbsp;日期&nbsp;&nbsp;顶点&nbsp; </span>
+					<input style="width:50px;"
+						v-model="location.date.top"
+						type="text" />
+					<span>左边&nbsp;</span><input style="width:50px;"
+						v-model="location.date.left"
+						type="text" />
+					<span>宽度&nbsp;</span><input style="width:50px;"
+						v-model="location.date.width"
+						type="text" />
+					<span>高度&nbsp;</span><input style="width:50px;"
+						v-model="location.date.height"
+						type="text" />
+					<span style="float:right">
+					<span style="margin-left: 6px;">&nbsp;&nbsp;年&nbsp;&nbsp;顶点&nbsp; </span>
+					<input style="width:50px;"
+						v-model="location.year.top"
+						type="text" />
+					<span>左边&nbsp;</span><input style="width:50px;"
+						v-model="location.year.left"
+						type="text" />
+					<span>宽度&nbsp;</span><input style="width:50px;"
+						v-model="location.year.width"
+						type="text" />
+					<span>高度&nbsp;</span><input style="width:50px;"
+						v-model="location.year.height"
+						type="text" />
+					</span>
+				</div>
+				<div class="ui-dialog-l40">
+					<span style="margin-left: 6px;">&nbsp; &nbsp; &nbsp; &nbsp; &nbsp;月&nbsp;&nbsp;顶点&nbsp; </span>
+					<input style="width:50px;"
+						v-model="location.month.top"
+						type="text" />
+					<span>左边&nbsp;</span><input style="width:50px;"
+						v-model="location.month.left"
+						type="text" />
+					<span>宽度&nbsp;</span><input style="width:50px;"
+						v-model="location.month.width"
+						type="text" />
+					<span>高度&nbsp;</span><input style="width:50px;"
+						v-model="location.month.height"
+						type="text" />
+					<span style="float:right">
+					<span style="margin-left: 6px;">&nbsp;&nbsp;日&nbsp;&nbsp;顶点&nbsp; </span>
+					<input style="width:50px;"
+						v-model="location.day.top"
+						type="text" />
+					<span>左边&nbsp;</span><input style="width:50px;"
+						v-model="location.day.left"
+						type="text" />
+					<span>宽度&nbsp;</span><input style="width:50px;"
+						v-model="location.day.width"
+						type="text" />
+					<span>高度&nbsp;</span><input style="width:50px;"
+						v-model="location.day.height"
+						type="text" />
+					</span>
+				</div>
+				<div class="ui-dialog-l40">
+					<span style="margin-left: 6px;">&nbsp; &nbsp; &nbsp;司机&nbsp;&nbsp;顶点&nbsp; </span>
+					<input style="width:50px;"
+						v-model="location.driver.top"
+						type="text" />
+					<span>左边&nbsp;</span><input style="width:50px;"
+						v-model="location.driver.left"
+						type="text" />
+					<span>宽度&nbsp;</span><input style="width:50px;"
+						v-model="location.driver.width"
+						type="text" />
+					<span>高度&nbsp;</span><input style="width:50px;"
+						v-model="location.driver.height"
+						type="text" />
+					<span style="float:right">
+					
+					<span style="margin-left: 6px;">&nbsp;&nbsp;付款方式&nbsp;&nbsp;顶点&nbsp; </span>
+					<input style="width:50px;"
+						v-model="location.payMethod.top"
+						type="text" />
+					<span>左边&nbsp;</span><input style="width:50px;"
+						v-model="location.payMethod.left"
+						type="text" />
+					<span>宽度&nbsp;</span><input style="width:50px;"
+						v-model="location.payMethod.width"
+						type="text" />
+					<span>高度&nbsp;</span><input style="width:50px;"
+						v-model="location.payMethod.height"
+						type="text" />
+						</span>
+				</div>
+				<div class="ui-dialog-l40">
+					<span style="margin-left: 6px;">承运商2&nbsp;&nbsp;顶点&nbsp; </span>
+					<input style="width:50px;"
+						v-model="location.carrier2.top"
+						type="text" />
+					<span>左边&nbsp;</span><input style="width:50px;"
+						v-model="location.carrier2.left"
+						type="text" />
+					<span>宽度&nbsp;</span><input style="width:50px;"
+						v-model="location.carrier2.width"
+						type="text" />
+					<span>高度&nbsp;</span><input style="width:50px;"
+						v-model="location.carrier2.height"
+						type="text" />
+					<span style="float:right">
+					<span style="margin-left: 6px;">&nbsp;&nbsp;销售组织2&nbsp;&nbsp;顶点&nbsp; </span>
+					<input style="width:50px;"
+						v-model="location.saler2.top"
+						type="text" />
+					<span>左边&nbsp;</span><input style="width:50px;"
+						v-model="location.saler2.left"
+						type="text" />
+					<span>宽度&nbsp;</span><input style="width:50px;"
+						v-model="location.saler2.width"
+						type="text" />
+					<span>高度&nbsp;</span><input style="width:50px;"
+						v-model="location.saler2.height"
+						type="text" />
+					</span>
+				</div>
+				<div class="ui-dialog-l40">
+					<span style="margin-left: 6px;">&nbsp;&nbsp;&nbsp;&nbsp; 方数&nbsp;&nbsp;顶点&nbsp; </span>
+					<input style="width:50px;"
+						v-model="location.cub.top"
+						type="text" />
+					<span>左边&nbsp;</span><input style="width:50px;"
+						v-model="location.cub.left"
+						type="text" />
+					<span>宽度&nbsp;</span><input style="width:50px;"
+						v-model="location.cub.width"
+						type="text" />
+					<span>高度&nbsp;</span><input style="width:50px;"
+						v-model="location.cub.height"
+						type="text" />
+						<span style="float:right">
+					<span style="margin-left: 6px;">&nbsp;&nbsp;单价&nbsp;&nbsp;顶点&nbsp; </span>
+					<input style="width:50px;"
+						v-model="location.unitprice.top"
+						type="text" />
+					<span>左边&nbsp;</span><input style="width:50px;"
+						v-model="location.unitprice.left"
+						type="text" />
+					<span>宽度&nbsp;</span><input style="width:50px;"
+						v-model="location.unitprice.width"
+						type="text" />
+					<span>高度&nbsp;</span><input style="width:50px;"
+						v-model="location.unitprice.height"
+						type="text" />
+					</span>
+				
+				</div>
+				<div class="ui-dialog-l40">
+					<span style="margin-left: 6px;">运输数量&nbsp;&nbsp;顶点&nbsp; </span>
+					<input style="width:50px;"
+						v-model="location.saleQty.top"
+						type="text" />
+					<span>左边&nbsp;</span><input style="width:50px;"
+						v-model="location.saleQty.left"
+						type="text" />
+					<span>宽度&nbsp;</span><input style="width:50px;"
+						v-model="location.saleQty.width"
+						type="text" />
+					<span>高度&nbsp;</span><input style="width:50px;"
+						v-model="location.saleQty.height"
+						type="text" />
+						<span style="float:right">
+					<span style="margin-left: 6px;">其它数量&nbsp;&nbsp;顶点&nbsp; </span>
+					<input style="width:50px;"
+						v-model="location.otherQty.top"
+						type="text" />
+					<span>左边&nbsp;</span><input style="width:50px;"
+						v-model="location.otherQty.left"
+						type="text" />
+					<span>宽度&nbsp;</span><input style="width:50px;"
+						v-model="location.otherQty.width"
+						type="text" />
+					<span>高度&nbsp;</span><input style="width:50px;"
+						v-model="location.otherQty.height"
+						type="text" />
+					</span>
+				
+				</div>
+					<div class="ui-dialog-l40">
+					<span style="margin-left: 6px;">合计数量&nbsp;&nbsp;顶点&nbsp; </span>
+					<input style="width:50px;"
+						v-model="location.allQty.top"
+						type="text" />
+					<span>左边&nbsp;</span><input style="width:50px;"
+						v-model="location.allQty.left"
+						type="text" />
+					<span>宽度&nbsp;</span><input style="width:50px;"
+						v-model="location.allQty.width"
+						type="text" />
+					<span>高度&nbsp;</span><input style="width:50px;"
+						v-model="location.allQty.height"
+						type="text" />
+					<span style="float:right">
+					<span style="margin-left: 6px;">身份证号&nbsp;&nbsp;顶点&nbsp; </span>
+					<input style="width:50px;"
+						v-model="location.idCard1.top"
+						type="text" />
+					<span>左边&nbsp;</span><input style="width:50px;"
+						v-model="location.idCard1.left"
+						type="text" />
+					<span>宽度&nbsp;</span><input style="width:50px;"
+						v-model="location.idCard1.width"
+						type="text" />
+					<span>高度&nbsp;</span><input style="width:50px;"
+						v-model="location.idCard1.height"
+						type="text" />
+					</span>
+				</div>
+				
+				
+					<div class="ui-dialog-l40">
+					<span style="margin-left: 6px;">驾驶证号&nbsp;&nbsp;顶点&nbsp; </span>
+					<input style="width:50px;"
+						v-model="location.idCard2.top"
+						type="text" />
+					<span>左边&nbsp;</span><input style="width:50px;"
+						v-model="location.idCard2.left"
+						type="text" />
+					<span>宽度&nbsp;</span><input style="width:50px;"
+						v-model="location.idCard2.width"
+						type="text" />
+					<span>高度&nbsp;</span><input style="width:50px;"
+						v-model="location.idCard2.height"
+						type="text" />
+					<span style="float:right">
+					<span style="margin-left: 6px;">车辆类型&nbsp;&nbsp;顶点&nbsp; </span>
+					<input style="width:50px;"
+						v-model="location.vehicleType.top"
+						type="text" />
+					<span>左边&nbsp;</span><input style="width:50px;"
+						v-model="location.vehicleType.left"
+						type="text" />
+					<span>宽度&nbsp;</span><input style="width:50px;"
+						v-model="location.vehicleType.width"
+						type="text" />
+					<span>高度&nbsp;</span><input style="width:50px;"
+						v-model="location.vehicleType.height"
+						type="text" />
+					</span>
+				</div>
+				
+				<div class="ui-dialog-l40">
+					<span style="margin-left: 6px;">车牌号码&nbsp;&nbsp;顶点&nbsp; </span>
+					<input style="width:50px;"
+						v-model="location.plate.top"
+						type="text" />
+					<span>左边&nbsp;</span><input style="width:50px;"
+						v-model="location.plate.left"
+						type="text" />
+					<span>宽度&nbsp;</span><input style="width:50px;"
+						v-model="location.plate.width"
+						type="text" />
+					<span>高度&nbsp;</span><input style="width:50px;"
+						v-model="location.plate.height"
+						type="text" />
+					<span style="float:right">
+					<span style="margin-left: 6px;">发动机号&nbsp;&nbsp;顶点&nbsp; </span>
+					<input style="width:50px;"
+						v-model="location.engineNo.top"
+						type="text" />
+					<span>左边&nbsp;</span><input style="width:50px;"
+						v-model="location.engineNo.left"
+						type="text" />
+					<span>宽度&nbsp;</span><input style="width:50px;"
+						v-model="location.engineNo.width"
+						type="text" />
+					<span>高度&nbsp;</span><input style="width:50px;"
+						v-model="location.engineNo.height"
+						type="text" />
+					</span>
+				</div>
+				
+				<div class="ui-dialog-l40">
+					<span style="margin-left: 6px;">&nbsp; 二维码&nbsp;&nbsp;顶点&nbsp; </span>
+					<input style="width:50px;"
+						v-model="location.qrUrl.top"
+						type="text" />
+					<span>左边&nbsp;</span><input style="width:50px;"
+						v-model="location.qrUrl.left"
+						type="text" />
+					<span>宽度&nbsp;</span><input style="width:50px;"
+						v-model="location.qrUrl.width"
+						type="text" />
+					<span>高度&nbsp;</span><input style="width:50px;"
+						v-model="location.qrUrl.height"
+						type="text" />
+						<span style="float:right">
+					<span style="margin-left: 6px;">&nbsp;&nbsp;整体位置&nbsp;&nbsp;顶点&nbsp; </span>
+					<input style="width:50px;"
+						v-model="location.entity.top"
+						type="text" />
+					<span>左边&nbsp;</span><input style="width:50px;"
+						v-model="location.entity.left"
+						type="text" />
+					<span>宽度&nbsp;</span><input style="width:50px;"
+						v-model="location.entity.width"
+						type="text" />
+					<span>高度&nbsp;</span><input style="width:50px;"
+						v-model="location.entity.height"
+						type="text" />
+					</span>
+				
+				</div>
+				
+				<div class="ui-dialog-l40">
+						<span style="float:left">
+						<span>字体大小&nbsp;</span><input style="width:50px;"
+						v-model="location.fontSize"
+						type="text" />
+						</span>
+				
+						<span style="float:right">
+							<button onclick="saveLocation2Local()">提交</button>
+							<button @click="showShibie()">根据代码生成坐标信息</button>
+						</span>
+				
+				</div>
+			</div>
+		</div>
+		
+		
+			<div class="ui-dialog" style="height:500px;" id="shibieshow" onselectstart='return false;'>
+			<div class="ui-dialog-title" id="dialogDrag"
+				onselectstart="return false;">
+				代码位置识别<a class="ui-dialog-closebutton" @click="hideDiv('shibieshow')"></a>
+			</div>
+			<div class="ui-dialog-content">
+			    	<span class="ui-dialog-span">位置代码:</span>
+				<div class="ui-dialog-l40">
+				
+					<textarea rows="15" cols="90" v-model="sourceLocation">
+					</textarea>
+					<a style="margin-top:30px;"class="ui-dialog-submit" @click="shibie()">识别</a>
+				</div>
+			</div>
+		</div>
+
+
+
+			<div class="ui-dialog" id="nodeshow" onselectstart='return false;'>
+				<div class="ui-dialog-title" id="dialogDrag"
+					onselectstart="return false;">
+					物流节点信息 <a class="ui-dialog-closebutton"
+						@click="hideDiv('nodeshow')"></a>
+				</div>
+				<div class="ui-dialog-content">
+					<div class="ui-dialog-l40">
+						<span class="ui-dialog-span">当前状态:</span><span
+							style="font-size: 14px;">{{node | logisticsStatus}}</span>
+					</div>
+					<div v-if="node.logisticsEntity.logisticsStatus>=0"
+						class="ui-dialog-l40">
+						<span class="ui-dialog-span">创建时间:</span><span
+							style="font-size: 14px;">{{node.logisticsEntity.createTime
+							| time}}</span>
+					</div>
+					<div v-if="node.logisticsEntity.logisticsStatus>0"
+						class="ui-dialog-l40">
+						<span class="ui-dialog-span">派车时间:</span><span
+							style="font-size: 14px;">{{node.logisticsEntity.dispatchTime
+							| time}}</span>
+					</div>
+					<div v-if="node.logisticsEntity.logisticsStatus>0"
+						class="ui-dialog-l40">
+						<span class="ui-dialog-span">物流联系人二维码地址:</span><span
+							style="font-size: 14px;"><a @click="openDriverQrUrl()">查看</a></span>
+					</div>
+					<div v-if="node.logisticsEntity.logisticsStatus>1"
+						class="ui-dialog-l40">
+						<span class="ui-dialog-span">到厂时间:</span><span
+							style="font-size: 14px;">{{node.logisticsEntity.arriveTime
+							| time}}</span>
+					</div>
+					<div v-if="node.logisticsEntity.logisticsStatus>2"
+						class="ui-dialog-l40">
+						<span class="ui-dialog-span">装载时间:</span><span
+							style="font-size: 14px;">{{node.logisticsEntity.shipmentTime
+							| time}}</span>
+					</div>
+					<div v-if="node.logisticsEntity.logisticsStatus>2"
+						class="ui-dialog-l40">
+						<span class="ui-dialog-span">客户二维码地址:</span><span
+							style="font-size: 14px;"><a @click="openClientQrUrl()">查看</a></span>
+					</div>
+					<div v-if="node.logisticsEntity.logisticsStatus>2"
+						class="ui-dialog-l40">
+						<span class="ui-dialog-span">协议上客户二维码地址:</span><span
+							style="font-size: 14px;"><a @click="openClientQrUrl2()">查看</a></span>
+					</div>
+					<div v-if="node.logisticsEntity.logisticsStatus>2"
+						class="ui-dialog-l40">
+						<span class="ui-dialog-span">业务员二维码地址:</span><span
+							style="font-size: 14px;"><a @click="openEmployeeQrUrl()">查看</a></span>
+					</div>
+					
+					<div v-if="node.logisticsEntity.logisticsStatus>3"
+						class="ui-dialog-l40">
+						<span class="ui-dialog-span">出厂时间:</span><span
+							style="font-size: 14px;">{{node.logisticsEntity.leaveTime
+							| time}}</span>
+					</div>
+					<div v-if="node.expressEntity.status==1" class="ui-dialog-l40">
+						<span class="ui-dialog-span">送达时间:</span><span
+							style="font-size: 14px;">{{node.expressEntity.updateTime |
+							time}}</span>
+					</div>
+				</div>
+			</div>
+			<div class="ui-dialog" id="editshow" onselectstart='return false;'>
+				<div class="ui-dialog-title" id="dialogDrag"
+					onselectstart="return false;">
+					物流信息 <a class="ui-dialog-closebutton" @click="hideDiv('editshow')"></a>
+
+				</div>
+				<div class="ui-dialog-content"
+					v-if="updateLogistics.logisticsEntity.logisticsStatus==0">
+					<div class="ui-dialog-l40">
+						<span class="ui-dialog-span"><span style="color: red;">&emsp;*</span>所属组织:</span>
+						<select style="height: 28px; width: 164px; margin-left: 5px"
+							id="selectOrg"
+							v-model="updateLogistics.logisticsEntity.organization">
+							<option v-for="post  in user.userPostVos" :value="post.orgName">{{post.orgName}}</option>
+						</select>
+					</div>
+					<div class="ui-dialog-l40">
+						<span class="ui-dialog-span"><span
+							style="margin-left: 6px;"></span>&emsp;物流单号:</span><input
+							class="ui-dialog-input"
+							v-model="updateLogistics.logisticsEntity.logisticsNo" type="text" />
+					</div>
+					<div class="ui-dialog-l40">
+						<span class="ui-dialog-span"><span style="color: red;">&emsp;*</span>送货地点:</span><input
+							class="ui-dialog-input"
+							v-model="updateLogistics.logisticsEntity.destination" type="text" />
+					</div>
+
+					<div class="ui-dialog-l40">
+						<span class="ui-dialog-span"><span style="color: red;">&emsp;*</span>物流公司:</span><input
+							class="ui-dialog-input"
+							v-model="updateLogistics.logisticsEntity.expressCompany"
+							type="text" />
+					</div>
+					<div class="ui-dialog-l40">
+						<span class="ui-dialog-span"><span style="color: red;">*</span>物流联系人:</span><input
+							class="ui-dialog-input"
+							v-model="updateLogistics.logisticsEntity.driverName" type="text" />
+					</div>
+					<div class="ui-dialog-l40">
+						<span class="ui-dialog-span"><span style="color: red;">*</span>联系人电话:</span><input
+							class="ui-dialog-input"
+							v-model="updateLogistics.logisticsEntity.driverPhone" type="text" />
+					</div>
+					<div>
+						<a class="ui-dialog-submit" @click="update()">修改</a>
+					</div>
+				</div>
+
+				<div class="ui-dialog-content"
+					v-if="updateLogistics.logisticsEntity.logisticsStatus>0">
+
+					<p style="color: red">请注意:此处为了防止某处环节遗漏,可以手动修改物流状态,如非必要,请勿随意操作。</p>
+					物流单号[{{updateLogistics.logisticsEntity.logisticsNo}}],你将手动修改物流状态: <a
+						href="#"
+						v-if="updateLogistics.logisticsEntity.logisticsStatus==1 && isDispatcher"
+						@click=updateStatus(updateLogistics,2)>已到厂</a> <a href="#"
+						v-if="updateLogistics.logisticsEntity.logisticsStatus==3 && isDispatcher"
+						@click=updateStatus(updateLogistics,4)>已出厂</a> <a href="#"
+						v-if="updateLogistics.logisticsEntity.logisticsStatus==4 &&updateLogistics.expressEntity.status==0&&isDispatcher"
+						@click=updateStatus(updateLogistics,5)>已到达</a>
+				</div>
+			</div>
+			<div class="ui-dialog" id="commentshow" onselectstart='return false;'>
+				<div class="ui-dialog-title" id="dialogDrag"
+					onselectstart="return false;">
+					评价信息 <a class="ui-dialog-closebutton"
+						@click="hideDiv('commentshow')"></a>
+				</div>
+				<div class="ui-dialog-content">
+					<textarea id="submitComment" rows="6"
+						style="background-color: #ffffff; width: 100%;"
+						disabled="disabled"></textarea>
+					<div style="margin: 10px;">
+						<span class="revtit">物流时效:</span> <img id="wlsx1"
+							src="./assets/comment/img/star-on-big.png" alt="1" title="1" />&nbsp;<img
+							id="wlsx2" src="./assets/comment/img/star-on-big.png" alt="2"
+							title="2" />&nbsp;<img id="wlsx3"
+							src="./assets/comment/img/star-on-big.png" alt="3" title="3" />&nbsp;<img
+							id="wlsx4" src="./assets/comment/img/star-on-big.png" alt="4"
+							title="4" />&nbsp;<img id="wlsx5"
+							src="./assets/comment/img/star-on-big.png" alt="5" title="5" />
+					</div>
+
+					<div style="margin: 10px;">
+						<span class="revtit">包装完整:</span> <img id="bzwz1"
+							src="./assets/comment/img/star-on-big.png" alt="1" title="1" />&nbsp;<img
+							id="bzwz2" src="./assets/comment/img/star-on-big.png" alt="2"
+							title="2" />&nbsp;<img id="bzwz3"
+							src="./assets/comment/img/star-on-big.png" alt="3" title="3" />&nbsp;<img
+							id="bzwz4" src="./assets/comment/img/star-on-big.png" alt="4"
+							title="4" />&nbsp;<img id="bzwz5"
+							src="./assets/comment/img/star-on-big.png" alt="5" title="5" />
+
+					</div>
+
+					<div style="margin: 10px;">
+						<span class="revtit">司机态度:</span> <img id="sjtd1"
+							src="./assets/comment/img/star-on-big.png" alt="1" title="1" />&nbsp;<img
+							id="sjtd2" src="./assets/comment/img/star-on-big.png" alt="2"
+							title="2" />&nbsp;<img id="sjtd3"
+							src="./assets/comment/img/star-on-big.png" alt="3" title="3" />&nbsp;<img
+							id="sjtd4" src="./assets/comment/img/star-on-big.png" alt="4"
+							title="4" />&nbsp;<img id="sjtd5"
+							src="./assets/comment/img/star-on-big.png" alt="5" title="5" />
+					</div>
+					<div>
+						<img
+							style="width: 25%; height: 120px; margin: 10px; display: none;"
+							id="p1"
+							@click="showBigImg('#outerdiv', '#innerdiv', '#bigimg','p1')" />
+						<img
+							style="width: 25%; height: 120px; margin: 10px; display: none;"
+							id="p2"
+							@click="showBigImg('#outerdiv', '#innerdiv', '#bigimg','p2')" />
+						<img
+							style="width: 25%; height: 120px; margin: 10px; display: none;"
+							id="p3"
+							@click="showBigImg('#outerdiv', '#innerdiv', '#bigimg','p3')" />
+
+					</div>
+					<div>
+						<img
+							style="width: 25%; height: 120px; margin: 10px; display: none;"
+							id="p4"
+							@click="showBigImg('#outerdiv', '#innerdiv', '#bigimg','p4')" />
+						<img
+							style="width: 25%; height: 120px; margin: 10px; display: none;"
+							id="p5"
+							@click="showBigImg('#outerdiv', '#innerdiv', '#bigimg','p5')" />
+						<img
+							style="width: 25%; height: 120px; margin: 10px; display: none;"
+							id="p6"
+							@click="showBigImg('#outerdiv', '#innerdiv', '#bigimg','p6')" />
+
+					</div>
+				</div>
+			</div>
+			<div id="outerdiv"
+				style="position: fixed; top: 0; left: 0; background: rgba(0, 0, 0, 0.7); z-index: 2; width: 100%; height: 100%; display: none;">
+				<div id="innerdiv" style="position: absolute;">
+					<img id="bigimg" style="border: 5px solid #fff;" src="" />
+				</div>
+			</div>
+
+		</div>
+</body>
+</html>
+
+
+<script>
+var app = null;
+var clipboard = new Clipboard('.btn');
+clipboard.on('success', function(e) {
+    console.log(e);
+});
+clipboard.on('error', function(e) {
+    alert("当前浏览器不支持点击复制,请手动复制");
+});
+window.onload = function(){
+    var height = document.body.scrollHeight;
+    height=height/100 *75;
+    $("#table_outner_div").height(height);
+};
+
+
+	$(function() {	
+		var phoneReg = /^1[3|4|5|6|7|8|9][0-9]\d{8,11}$/;
+		app = new Vue(
+				{
+					el : '#app',
+					filters : {
+						logisticsStatus : function(logistics) {
+							var status=logistics.logisticsEntity.logisticsStatus;
+							var eStatus=0;
+							if(logistics.expressEntity)
+							 eStatus=logistics.expressEntity.status;
+							
+							if (status == 0) {
+								return "创建";
+							}
+							if (status == 1) {
+								return "已调车";
+							}
+							if (status == 2) {
+								return "已进厂";
+							}
+							if (status == 3) {
+								return "已装载";
+							}
+							if (status == 4) {
+								if(eStatus==0)
+								return "已出厂";
+								if(eStatus==1)
+									return "已送达";
+								if(eStatus==2)
+									return "已评价";
+							}
+							if (status == 5) {
+								if(eStatus==1)
+									return "已送达";
+								if(eStatus==2)
+									return "已评价";
+							}
+							if (status == 6) {
+								return "已评价";
+							}
+							return "未知";
+
+						},
+						time : function(value) {
+							var date = new Date(value * 1000);//时间戳为10位需*1000
+							var Y = date.getFullYear() + '-';
+							var M = (date.getMonth() + 1 < 10 ? '0'
+									+ (date.getMonth() + 1)
+									: date.getMonth() + 1)
+									+ '-';
+							var D = date.getDate() + ' ';
+							var h = app.dFomate(date.getHours()) + ':';
+							var m = app.dFomate(date.getMinutes()) + ':';
+							var s = app.dFomate(date.getSeconds());
+							return Y + M + D + h + m + s;
+
+						}
+					},
+					watch:{
+						'addLogistics.expressCompany':function(curVal,oldVal){
+								console.log("CUR:"+curVal);
+								if(oldVal!=curVal){
+								  app.isWlNav=false;
+					　　　　　　　　　app.wlPageHandler(1);　
+								}
+						},
+						'addDriver.driverName':function(curVal,oldVal){
+							if(oldVal!=curVal){
+							  app.isSjNav=false;
+				　　　　　　　　　app.sjPageHandler(1);　
+							}
+						},
+						'addDriver.plate':function(curVal,oldVal){
+							if(oldVal!=curVal){
+							  app.isClNav=false;
+				　　　　　　　　　app.clPageHandler(1);　
+							}
+						}
+					},
+					data : {
+						isDispatcher:false,
+						targetUrl:"",
+						user : {},
+						qrUrl : "",
+						clientUrl : "",
+						clientUrl2 : "",
+						employeeUrl : "",
+						page : 1, //显示的是哪一页
+						pageSize : 20, //每一页显示的数据条数
+						isInitNav:false,
+						isWlNav:false,
+						isSjNav:false,
+						isClNav:false,
+						total : 0, //记录总数
+						maxPage : 1, //最大页数
+						index : {},
+						logisticsList : [],
+						logistics : {
+							logisticsId : ""
+						},
+						stock:{},
+						updateLogistics : {
+							logisticsEntity:{},
+							expressEntity:{}
+						},
+						addLogistics : {
+							expressCompany:"",
+							driverName:"",
+							driverPhone:"",
+							organization:"",
+							destination:""
+							
+						},
+						addDriver:{
+							index:0,
+							logisticsId:0,
+							driverId:0,
+							driverName:"",
+							driverPhone:"",
+							idCard:"",
+							plate:"",
+							vehicleType:"",
+							engineNo:""
+						},
+						node : {
+							logisticsEntity : {},
+							expressEntity : {}
+						},
+						search : {
+							logisticsNo : "",
+							expressCompany : "",
+							deliveryOrder : "",
+							logisticsStatus : -1,
+							organization:"",
+							client:"",
+							address:"",
+							timeType:-1,
+							beginTime:"",
+							endTime:""
+						},
+						shibieType:0,
+						wlPage : 1, //显示的是哪一页
+						wlPageSize : 7, //每一页显示的数据条数
+						wlTotal : 0, //记录总数
+						wlMaxPage : 1, //最大页数
+						sjPage : 1, //显示的是哪一页
+						sjPageSize : 7, //每一页显示的数据条数
+						sjTotal : 0, //记录总数
+						sjMaxPage : 1, //最大页数
+						clPage : 1, //显示的是哪一页
+						clPageSize : 7, //每一页显示的数据条数
+						clTotal : 0, //记录总数
+						clMaxPage : 1, //最大页数
+						companies:[],
+						orgNo:"",
+						drivers:[],
+						drivers2:[],
+						vehicles:[],
+						smsResult:"",
+						sourceLocation:"",
+						envelop:{
+							entity:{
+								top:0,
+								left:0,
+								width:800,
+								height:430
+							},
+							client:{
+								top:90,
+								left:230,
+								width:340,
+								height:55
+							},
+							receiver:{
+								top:150,
+								left:230,
+								width:370,
+								height:40
+							},
+							address:{
+								top:190,
+								left:230,
+								width:380,
+								height:65
+							},
+							mark:{
+								top:260,
+								left:540,
+								width:150,
+								height:40
+							},
+							fontSize:16
+						},
+						location:{
+							entity:{
+								top:0,
+								left:0,
+								width:800,
+								height:1100
+							},
+							carrier:{
+								top:115,
+								left:125,
+								width:230,
+								height:30
+							},
+							saler:{
+								top:90,
+								left:125,
+								width:230,
+								height:30
+							},
+							billNo:{
+								top:90,
+								left:595,
+								width:140,
+								height:30
+							},
+							startPoint:{
+								top:180,
+								left:185,
+								width:250,
+								height:30
+							},
+							endPoint:{
+								top:180,
+								left:450,
+								width:250,
+								height:30
+							},
+							transportationCost:{
+								top:310,
+								left:665,
+								width:60,
+								height:30
+							},
+							cub:{
+								top:285,
+								left:85,
+								width:80,
+								height:20
+							},
+							unitprice:{
+								top:310,
+								left:160,
+								width:55,
+								height:20
+							},
+							saleQty:{
+								top:265,
+								left:115,
+								width:90,
+								height:20
+							},
+							otherQty:{
+								top:265,
+								left:390,
+								width:90,
+								height:20
+							},		
+							allQty:{
+								top:265,
+								left:660,
+								width:90,
+								height:20
+							},
+							wan:{
+								top:310,
+								left:350,
+								width:30,
+								height:20
+							},
+							qian:{
+								top:310,
+								left:395,
+								width:25,
+								height:20
+							},
+							bai:{
+								top:310,
+								left:435,
+								width:25,
+								height:20
+							},
+							shi:{
+								top:310,
+								left:480,
+								width:25,
+								height:20
+							},
+							ge:{
+								top:310,
+								left:525,
+								width:25,
+								height:20
+							},
+							jiao:{
+								top:310,
+								left:565,
+								width:25,
+								height:20
+							},
+							fen:{
+								top:310,
+								left:600,
+								width:25,
+								height:20
+							},
+							receiver:{
+								top:225,
+								left:205,
+								width:100,
+								height:20
+							},
+							receivePhone:{
+								top:225,
+								left:405,
+								width:100,
+								height:20
+							},
+							receiveAddress:{
+								top:225,
+								left:565,
+								width:220,
+								height:40
+							},
+							idCard1:{
+								top:550,
+								left:295,
+								width:230,
+								height:20
+							},
+							idCard2:{
+								top:550,
+								left:590,
+								width:190,
+								height:40
+							},
+							vehicleType:{
+								top:575,
+								left:65,
+								width:100,
+								height:20
+							},
+							plate:{
+								top:575,
+								left:230,
+								width:120,
+								height:20
+							},
+							engineNo:{
+								top:575,
+								left:420,
+								width:115,
+								height:20
+							},
+							driver:{
+								top:560,
+								left:130,
+								width:100,
+								height:20
+							},
+							saler2:{
+								top:875,
+								left:70,
+								width:290,
+								height:30
+							},
+							carrier2:{
+								top:875,
+								left:420,
+								width:300,
+								height:30
+							},
+							payMethod:{
+								top:335,
+								left:703,
+								width:80,
+								height:20
+							},
+							qrUrl:{
+								top:830,
+								left:660,
+								width:95,
+								height:95
+							},
+							date:{
+								top:120,
+								left:595,
+								width:140,
+								height:20
+							},
+							year:{
+								top:200,
+								left:160,
+								width:80,
+								height:20
+							},
+							month:{
+								top:200,
+								left:230,
+								width:80,
+								height:20
+							},
+							day:{
+								top:200,
+								left:300,
+								width:80,
+								height:20
+							},
+							fontSize:12
+	
+						}
+
+					},
+					methods : {
+						showBigImg:function(outerdiv, innerdiv, bigimg,id){
+							
+							 var src = $("#"+id).attr("src");//获取当前点击的pimg元素中的src属性  
+						        $(bigimg).attr("src", src);//设置#bigimg元素的src属性  
+						      
+						            /*获取当前点击图片的真实大小，并显示弹出层及大图*/  
+						        $("<img/>").attr("src", src).load(function(){  
+						            var windowW = $(window).width();//获取当前窗口宽度  
+						            var windowH = $(window).height();//获取当前窗口高度  
+						            var realWidth = this.width;//获取图片真实宽度  
+						            var realHeight = this.height;//获取图片真实高度  
+						            var imgWidth, imgHeight;  
+						            var scale = 0.8;//缩放尺寸，当图片真实宽度和高度大于窗口宽度和高度时进行缩放  
+						              
+						            if(realHeight>windowH*scale) {//判断图片高度  
+						                imgHeight = windowH*scale;//如大于窗口高度，图片高度进行缩放  
+						                imgWidth = imgHeight/realHeight*realWidth;//等比例缩放宽度  
+						                if(imgWidth>windowW*scale) {//如宽度扔大于窗口宽度  
+						                    imgWidth = windowW*scale;//再对宽度进行缩放  
+						                }  
+						            } else if(realWidth>windowW*scale) {//如图片高度合适，判断图片宽度  
+						                imgWidth = windowW*scale;//如大于窗口宽度，图片宽度进行缩放  
+						                            imgHeight = imgWidth/realWidth*realHeight;//等比例缩放高度  
+						            } else {//如果图片真实高度和宽度都符合要求，高宽不变  
+						                imgWidth = realWidth;  
+						                imgHeight = realHeight;  
+						            }  
+						                    $(bigimg).css("width",imgWidth);//以最终的宽度对图片缩放  
+						              
+						            var w = (windowW-imgWidth)/2;//计算图片与窗口左边距  
+						            var h = (windowH-imgHeight)/2;//计算图片与窗口上边距  
+						            $(innerdiv).css({"top":h, "left":w});//设置#innerdiv的top和left属性  
+						            $(outerdiv).fadeIn("fast");//淡入显示#outerdiv及.pimg  
+						        });  
+						          
+						        $(outerdiv).click(function(){//再次点击淡出消失弹出层  
+						            $(this).fadeOut("fast");  
+						        });  
+							
+							
+						},
+						shibie:function(){
+							if(app.shibieType==1){
+							setCache2LocalStorage("printLocation",app.location);
+							var location=recognition(app.sourceLocation,"(图像1的超文本路径)");
+							if(!checkLocation(location,"qrUrl")){
+								return;
+							}
+							location=recognition(app.sourceLocation,"套打货物运输合同的模板");
+							if(!checkLocation(location,"entity")){
+								return;
+							}
+							location=recognition(app.sourceLocation,"销售组织1");
+							if(!checkLocation(location,"saler")){
+								return;
+							}
+							location=recognition(app.sourceLocation,"承运商1");
+							if(!checkLocation(location,"carrier")){
+								return;
+							}
+							location=recognition(app.sourceLocation,"运单号");
+							if(!checkLocation(location,"billNo")){
+								return;
+							}
+							location=recognition(app.sourceLocation,"始发地");
+							if(!checkLocation(location,"startPoint")){
+								return;
+							}
+							location=recognition(app.sourceLocation,"目的地");
+							if(!checkLocation(location,"endPoint")){
+								return;
+							}
+							location=recognition(app.sourceLocation,"运输费用");
+							if(!checkLocation(location,"transportationCost")){
+								return;
+							}
+							location=recognition(app.sourceLocation,"万");
+							if(!checkLocation(location,"wan")){
+								return;
+							}
+							location=recognition(app.sourceLocation,"千");
+							if(!checkLocation(location,"qian")){
+								return;
+							}
+							location=recognition(app.sourceLocation,"百");
+							if(!checkLocation(location,"bai")){
+								return;
+							}
+							location=recognition(app.sourceLocation,"十");
+							if(!checkLocation(location,"shi")){
+								return;
+							}
+							location=recognition(app.sourceLocation,"个");
+							if(!checkLocation(location,"ge")){
+								return;
+							}
+							location=recognition(app.sourceLocation,"角");
+							if(!checkLocation(location,"jiao")){
+								return;
+							}
+							location=recognition(app.sourceLocation,"分");
+							if(!checkLocation(location,"fen")){
+								return;
+							}
+							location=recognition(app.sourceLocation,"收货人");
+							if(!checkLocation(location,"receiver")){
+								return;
+							}
+							location=recognition(app.sourceLocation,"电话");
+							if(!checkLocation(location,"receivePhone")){
+								return;
+							}
+							location=recognition(app.sourceLocation,"地址");
+							if(!checkLocation(location,"receiveAddress")){
+								return;
+							}
+							location=recognition(app.sourceLocation,"司机姓名");
+							if(!checkLocation(location,"driver")){
+								return;
+							}
+							location=recognition(app.sourceLocation,"销售组织2");
+							if(!checkLocation(location,"saler2")){
+								return;
+							}
+							location=recognition(app.sourceLocation,"承运商2");
+							if(!checkLocation(location,"carrier2")){
+								return;
+							}
+							location=recognition(app.sourceLocation,"付款方式");
+							if(!checkLocation(location,"payMethod")){
+								return;
+							}
+							location=recognition(app.sourceLocation,"日期");
+							if(!checkLocation(location,"date")){
+								return;
+							}
+							location=recognition(app.sourceLocation,"年");
+							if(!checkLocation(location,"year")){
+								return;
+							}
+							
+							location=recognition(app.sourceLocation,"月");
+							if(!checkLocation(location,"month")){
+								return;
+							}
+							location=recognition(app.sourceLocation,"日");
+							if(!checkLocation(location,"day")){
+								return;
+							}
+							location=recognition(app.sourceLocation,"方数");
+							if(!checkLocation(location,"cub")){
+								return;
+							}
+							location=recognition(app.sourceLocation,"单价");
+							if(!checkLocation(location,"unitprice")){
+								return;
+							}
+							location=recognition(app.sourceLocation,"运输数量");
+							if(!checkLocation(location,"saleQty")){
+								return;
+							}
+							location=recognition(app.sourceLocation,"其它数量");
+							if(!checkLocation(location,"otherQty")){
+								return;
+							}
+							location=recognition(app.sourceLocation,"合计数量");
+							if(!checkLocation(location,"allQty")){
+								return;
+							}
+							location=recognition(app.sourceLocation,"驾驶证号");
+							if(!checkLocation(location,"idCard2")){
+								return;
+							}
+							location=recognition(app.sourceLocation,"身份证号");
+							if(!checkLocation(location,"idCard1")){
+								return;
+							}
+							location=recognition(app.sourceLocation,"车牌号");
+							if(!checkLocation(location,"plate")){
+								return;
+							}
+							location=recognition(app.sourceLocation,"发动机号");
+							if(!checkLocation(location,"engineNo")){
+								return;
+							}
+							location=recognition(app.sourceLocation,"车辆类型");
+							if(!checkLocation(location,"vehicleType")){
+								return;
+							}
+							setCache2LocalStorage("printLocation",app.location);
+							this.hideDiv("shibieshow");
+							alert("识别成功！");
+							}else if(app.shibieType==2){
+								setCache2LocalStorage("printEnvelop",app.envelop);
+								var envelop=recognition(app.sourceLocation,"客户名称");
+								if(!checkEnvelop(envelop,"client")){
+									return;
+								}
+								envelop=recognition(app.sourceLocation,"收货人和号码");
+								if(!checkEnvelop(envelop,"receiver")){
+									return;
+								}
+								envelop=recognition(app.sourceLocation,"信封模板");
+								if(!checkEnvelop(envelop,"entity")){
+									return;
+								}
+								envelop=recognition(app.sourceLocation,"收货地址");
+								if(!checkEnvelop(envelop,"address")){
+									return;
+								}
+								envelop=recognition(app.sourceLocation,"到货请扫码");
+								if(!checkEnvelop(envelop,"mark")){
+									return;
+								}
+								setCache2LocalStorage("printEnvelop",app.envelop);
+								this.hideDiv("shibieshow");
+								alert("识别成功！");
+							}
+							app.sourceLocation="";
+							
+						},
+						
+						dFomate:function(value){
+							if(value>=10)
+								return value;
+							return '0'+value;
+						},
+						exprortLogistics:function(){
+							var params="";
+							if(this.search.logisticsNo.length>0){
+								params="logisticsNo="+this.search.logisticsNo;
+							}
+							if(this.search.expressCompany.length>0){
+								if(params.length>0){
+									params=params+"&expressCompany="+this.search.expressCompany;
+								}else{
+									params="expressCompany="+this.search.expressCompany;
+								}
+							}
+							if(this.search.deliveryOrder.length>0){
+								if(params.length>0){
+									params=params+"&deliveryOrder="+this.search.deliveryOrder;
+								}else{
+									params="deliveryOrder="+this.search.deliveryOrder;
+								}
+							}
+							if(this.search.client.length>0){
+								if(params.length>0){
+									params=params+"&client="+this.search.client;
+								}else{
+									params="client="+this.search.client;
+								}
+							}
+							if(this.search.address.length>0){
+								if(params.length>0){
+									params=params+"&address="+this.search.client;
+								}else{
+									params="address="+this.search.client;
+								}
+							}
+							if(this.search.timeType>=0){
+								if(params.length>0){
+									params=params+"&timeType="+this.search.timeType;
+								}else{
+									params="timeType="+this.search.timeType;
+								}
+								if(this.search.beginTime.length>0){
+									params=params+"&beginTime="+getTimeStamp(this.search.beginTime);
+								}
+								if(this.search.endTime.length>0){
+									params=params+"&endTime="+getTimeStamp(this.search.endTime);
+								}
+							}
+							
+							if(this.search.logisticsStatus>=0){
+								if(params.length>0){
+									params=params+"&logisticsStatus="+this.search.logisticsStatus;
+								}else{
+									params="logisticsStatus="+this.search.logisticsStatus;
+								}
+							}
+							var url="/common/exportLogistics";
+							if(params.length>0){
+								url=url+"?"+params;
+							}
+							location.href=url;
+						},
+						selectDriver:function(index){
+							this.$set(this.addLogistics,"driverName",this.drivers[index].driverName);
+							this.$set(this.addLogistics,"driverPhone",this.drivers[index].driverPhone);
+							/* this.addLogistics.driverName=this.drivers[index].driverName;	
+							this.addLogistics.driverPhone=this.drivers[index].driverPhone; */	
+							this.hide('sjpp');
+						},
+						selectDriver2:function(index){
+							this.$set(this.addDriver,"driverName",this.drivers2[index].name);
+							this.$set(this.addDriver,"driverPhone",this.drivers2[index].phone);
+							this.$set(this.addDriver,"plate",this.drivers2[index].plate);
+							this.$set(this.addDriver,"driverId",this.drivers2[index].id);
+							this.$set(this.addDriver,"idCard",this.drivers2[index].idCard);
+							this.$set(this.addDriver,"engineNo",this.drivers2[index].engineNo);
+							this.$set(this.addDriver,"vehicleType",this.drivers2[index].vehicleType);
+							/* this.addLogistics.driverName=this.drivers[index].driverName;	
+							this.addLogistics.driverPhone=this.drivers[index].driverPhone; */	
+							this.hide('sjpp2');
+						},
+						selectVehicle:function(index){
+							this.$set(this.addDriver,"plate",this.vehicles[index].plate);
+							this.$set(this.addDriver,"engineNo",this.vehicles[index].engineNo);
+							this.$set(this.addDriver,"vehicleType",this.vehicles[index].vehicleType);
+							/* this.$set(this.addDriver,"vehicleId",this.vehicles[index].vehicleId); */
+							this.hide('clpp');
+						},
+						
+						
+						selectCompany:function(index){
+							this.$set(this.addLogistics,"expressCompany",this.companies[index].expressCompany);
+							this.drivers=this.companies[index].driverEntities;
+							if(this.drivers.length>0){//设置第一个
+								this.$set(this.addLogistics,"driverName",this.drivers[0].driverName);
+								this.$set(this.addLogistics,"driverPhone",this.drivers[0].driverPhone);
+							}
+							//this.$set(this.drivers,this.companies[index].driverEntities);
+							/* this.addLogistics.expressCompany=this.companies[index].expressCompany;	
+							this.drivers=this.companies[index].driverEntities; */
+							this.hide('wlpp');
+						},
+						getOrgNo:function(orgName){
+							var post=app.user.userPostVos;
+							for(var i=0;i<post.length;i++){
+								if(post[i].orgName==orgName){
+									app.orgNo=post[i].orgId;
+								}
+							}
+						},
+						queryNode : function() {
+							var cheboxs = $('#mtable').find('input:checked');
+							if (cheboxs.length != 1) {
+								alert("请选择一条数据！");
+								return;
+							}
+							var index = cheboxs[0].id;
+							app.node.logisticsEntity = app.logisticsList[index].logisticsEntity;
+							app.node.expressEntity = app.logisticsList[index].expressEntity;
+							var url = window.location.protocol + "//"
+									+ window.location.host;
+							app.qrUrl = url + "/d?l="
+									+ app.node.logisticsEntity.logisticsNo
+									+ "&t="
+									+ app.node.logisticsEntity.accessToken;
+							app.clientUrl = url
+									+ "/c?e="
+									+ app.logisticsList[index].expressEntity.id
+									+ "&t="
+									+ app.logisticsList[index].expressEntity.token;
+							app.clientUrl2 = url
+							+ "/c2?e="
+							+ app.logisticsList[index].expressEntity.id
+							+ "&t="
+							+ app.logisticsList[index].expressEntity.token;
+							app.employeeUrl = url + "/e?l="
+									+ app.node.logisticsEntity.logisticsNo
+									+ "&t="
+									+ app.node.logisticsEntity.accessToken;
+							showDialog('nodeshow', 'mask');
+						},
+						showPrint : function() {
+							var cheboxs = $('#mtable').find('input:checked');
+							if (cheboxs.length != 1) {
+								alert("请选择一条数据！");
+								return;
+							}
+							var index = cheboxs[0].id;
+							app.node.logisticsEntity = app.logisticsList[index].logisticsEntity;
+							app.node.expressEntity = app.logisticsList[index].expressEntity;
+							if(!app.node.expressEntity.deliveryOrder){
+								alert("该物流还未装载货物！");
+								return;
+							}
+							
+							var formData = {
+									"billNo" : app.node.expressEntity.deliveryOrder
+								}
+								formPost4Json("/logistics/getErpStockInfo", formData, function(data,
+										httpOptions, status) {
+									if (checkErrorDatas(data, httpOptions)) {
+										if (data.stockInfo) {
+										  app.stock=data.stockInfo;
+										}
+									}
+									showDialog('printshow', 'mask');
+								});
+						},
+						showLocation : function() {
+							var location=getCacheFromLocalStorage("printLocation");
+							if(location){
+								app.location=location;
+								if(!app.location.entity){
+									var entity={};
+									entity.top=0;
+									entity.left=0;
+									entity.width=800;
+									entity.height=1100;
+									app.location.entity=entity;
+								}
+							}
+							showDialog('locationshow', 'mask');
+						},
+						showEnvelop : function() {
+							var envelop=getCacheFromLocalStorage("printEnvelop");
+							if(envelop){
+								app.envelop=envelop;
+							}
+							showDialog('envelopshow', 'mask');
+						},
+						showShibie : function() {
+							app.shibieType=1;
+							showDialog('shibieshow', 'mask');
+						},
+						showEnvelopShibie : function() {
+							app.shibieType=2;
+							showDialog('shibieshow', 'mask');
+						},
+						queryComment : function(index) {
+							
+							var formData = {
+									"expressId" : app.logisticsList[index].expressEntity.id,
+									"t" : app.logisticsList[index].expressEntity.token
+								}
+								formPost4Json("/comment/getComment", formData, function(data,
+										httpOptions, status) {
+									if (checkErrorDatas(data, httpOptions)) {
+										if (data.comment) {
+											console.log(data.comment);
+											$("#submitComment").val("评价语: " + data.comment.comment);
+											hideStar(data.comment.timelinessScore, "wlsx");
+											hideStar(data.comment.wholenessScore, "bzwz");
+											hideStar(data.comment.serveScore, "sjtd");
+											var imgs=data.comment.imgs;
+											if(imgs!=null&&imgs.length>0){
+												var imgArray=imgs.split(",");
+												for(var i=0;i<imgArray.length;i++){
+													var j=i+1;
+													var id="p"+j
+													$('#'+id).attr('src',imgArray[i]);
+													$('#'+id).show();
+												}
+											}
+										}
+										showDialog('commentshow', 'mask');
+									}
+								});
+							
+						},
+						openDriverQrUrl : function() {
+							window.open(app.qrUrl);
+						},
+						openClientQrUrl : function() {
+							window.open(app.clientUrl);
+						},
+						openClientQrUrl2 : function() {
+							window.open(app.clientUrl2);
+						},
+						openEmployeeQrUrl : function() {
+							window.open(app.employeeUrl);
+						},
+						searchLogistics : function() {
+							
+							app.isInitNav=false;
+							app.pageHandler(1);
+						},
+						reset : function() {
+							app.search.logisticsNo = "";
+							app.search.expressCompany = "";
+							app.search.deliveryOrder = "";
+							app.search.logisticsStatus = -1;
+							app.search.client="";
+							app.search.address="";
+							app.search.timeType=-1;
+							app.search.beginTime="";
+							app.search.endTime="";
+							app.isInitNav=false;
+							app.pageHandler(1);
+
+						},
+						add : function() {
+							if (!app.addLogistics.organization) {
+								alert("所属组织不能为空");
+								return;
+							}
+							if (!app.addLogistics.expressCompany) {
+								alert("物流公司不能为空");
+								return;
+							}
+							if (!app.addLogistics.driverName) {
+								alert("物流联系人不能为空");
+								return;
+							}
+							if (!app.addLogistics.driverPhone) {
+								alert("联系人电话不能为空");
+								return;
+							}
+							if(!app.addLogistics.destination){
+								alert("送货地点不能为空");
+								return;
+							}
+							if (!phoneReg.test(app.addLogistics.driverPhone)) {
+								alert("请输入正确的手机号");
+								return;
+							}
+							var formData = {
+								"organization" : app.addLogistics.organization,
+								"logisticsNo" : app.addLogistics.logisticsNo,
+								"expressCompany" : app.addLogistics.expressCompany,
+								"driverName" : app.addLogistics.driverName,
+								"driverPhone" : app.addLogistics.driverPhone,
+								"destination":app.addLogistics.destination
+							}
+							formPost4Json(
+									"/logistics/addLogistics",
+									formData,
+									function(data, httpOptions, status) {
+										if (checkErrorDatas(data, httpOptions)) {
+											alert("新增成功！");
+											app.pageHandler(1);
+											app.hideDiv("addshow");
+										}
+									});
+
+						},
+						editDriver : function() {
+							if (!app.addDriver.driverId) {
+								alert("请选择一个司机");
+								return;
+							}
+							if(!app.addDriver.plate){
+								alert("请输入车牌号");
+								return;
+							}
+							if(!app.addDriver.engineNo){
+								alert("请输入发动机号");
+								return;
+							}
+							if(!app.addDriver.vehicleType){
+								alert("请输入车辆类型");
+								return;
+							}
+							
+							var formData = {
+								"logisticsId" : app.addDriver.logisticsId,
+								"driverId" : app.addDriver.driverId,
+								"plate":app.addDriver.plate,
+								"engineNo":app.addDriver.engineNo,
+								"vehicleType":app.addDriver.vehicleType,
+							}
+							formPost4Json(
+									"/logistics/editDriver",
+									formData,
+									function(data, httpOptions, status) {
+										if (checkErrorDatas(data, httpOptions)) {
+											app.hideDiv("adddrivershow");
+											app.location2Url(app.addDriver.index);
+										}
+									});
+
+						},
+						
+						
+						
+						
+						update : function() {
+							if (!app.updateLogistics.logisticsEntity.organization) {
+								alert("所属组织不能为空");
+								return;
+							}
+							if (!app.updateLogistics.logisticsEntity.expressCompany) {
+								alert("物流公司不能为空");
+								return;
+							}
+							if (!app.updateLogistics.logisticsEntity.driverName) {
+								alert("物流联系人不能为空");
+								return;
+							}
+							if (!app.updateLogistics.logisticsEntity.driverPhone) {
+								alert("联系人电话不能为空");
+								return;
+							}
+							if (!app.updateLogistics.logisticsEntity.destination) {
+								alert("送货地点不能为空");
+								return;
+							}
+							if (!phoneReg.test(app.updateLogistics.logisticsEntity.driverPhone)) {
+								alert("请输入正确的手机号");
+								return;
+							}
+							var formData = {
+								"logisticsId" : app.updateLogistics.logisticsEntity.id,
+								"organization" : app.updateLogistics.logisticsEntity.organization,
+								"logisticsNo" : app.updateLogistics.logisticsEntity.logisticsNo,
+								"expressCompany" : app.updateLogistics.logisticsEntity.expressCompany,
+								"driverName" : app.updateLogistics.logisticsEntity.driverName,
+								"driverPhone" : app.updateLogistics.logisticsEntity.driverPhone,
+								"destination":app.updateLogistics.logisticsEntity.destination
+							}
+							formPost4Json(
+									"/logistics/updateLogistics",
+									formData,
+									function(data, httpOptions, status) {
+										if (checkErrorDatas(data, httpOptions)) {
+											alert("修改成功！");
+											app.pageHandler(1);
+											app.hideDiv("editshow");
+										}
+									});
+
+						},
+						dispatchCar : function(index) {
+							var rowData = app.logisticsList[index].logisticsEntity;
+							var url = window.location.protocol + "//"
+							+ window.location.host;
+							app.targetUrl = url + "/d?l="
+							+ rowData.logisticsNo
+							+ "&t="
+							+ rowData.accessToken;
+							if (confirm("您正在对物流单号为:" + rowData.logisticsNo
+									+ "进行派车，是否派车？") == true) {
+								var formData = {
+									"logisticsId" : rowData.id
+								}
+								formPost4Json("/logistics/dispatchCar",
+										formData, function(data, httpOptions,
+												status) {
+											if (checkErrorDatas(data,
+													httpOptions)) {
+												app.smsResult=data.msg;
+												showDialog('addstatus', 'mask');
+												app.pageHandler(1);
+											}
+										});
+							}
+						},
+						updateStatus : function(logistics, status) {
+							var rowData =logistics;
+							if (confirm("您正在操作物流单号为:" + rowData.logisticsEntity.logisticsNo
+									+ "，是否操作？") == true) {
+								var formData = {
+									"logisticsId" : rowData.logisticsEntity.id,
+									"status" : status,
+									"expressId" : rowData.expressEntity.id
+								}
+								formPost4Json("/logistics/updateStatus",
+										formData, function(data, httpOptions,
+												status) {
+											if (checkErrorDatas(data,
+													httpOptions)) {
+												alert("操作成功！");
+												app.pageHandler(1);
+											}
+										});
+							}
+						},
+						queryUrl : function() {
+							var cheboxs = $('#mtable').find('input:checked');
+							if (cheboxs.length != 1) {
+								alert("请选择一条数据！");
+								return;
+							}
+							var index = cheboxs[0].id;
+							var url = "clipboardPage?logisticsNo="
+								+ app.logisticsList[index].logisticsEntity.logisticsNo
+								+ "&t="
+								+ app.logisticsList[index].logisticsEntity.accessToken
+							window.open(url, "_self");
+						},
+						location2Url : function(index) {
+							this.getOrgNo(app.logisticsList[index].logisticsEntity.organization);
+							var url = "shipment?logisticsNo="
+									+ app.logisticsList[index].logisticsEntity.logisticsNo
+									+ "&t="
+									+ app.logisticsList[index].logisticsEntity.accessToken
+									+"&orgNo="+this.orgNo;
+							window.open(url, "_self");
+						},
+						showEdit : function() {
+							var cheboxs = $('#mtable').find('input:checked');
+							if (cheboxs.length != 1) {
+								alert("请选择一条数据！");
+								return;
+							}
+							var index = cheboxs[0].id;
+							app.updateLogistics = app.logisticsList[index];
+							/* if (app.updateLogistics.logisticsStatus != 0) {
+								alert("该条信息正在运输中，无法修改！");
+								return;
+							} */
+							showDialog('editshow', 'mask');
+						},
+						showAdd : function() {
+							app.addLogistics.organization=this.search.organization;
+							showDialog('addshow', 'mask');
+						},
+						showAddDriver : function(index) {
+							app.addDriver.index=index;
+							app.addDriver.logisticsId=app.logisticsList[index].logisticsEntity.id;
+							showDialog('adddrivershow', 'mask');
+						},
+						hideDiv : function(id) {
+							if(id=="addshow"){
+								app.addLogistics.expressCompany="";
+								app.addLogistics.organization="";
+								app.addLogistics.logisticsNo="";
+								app.addLogistics.destination=""
+								this.$set(this.addLogistics,"driverName","");
+								this.$set(this.addLogistics,"driverPhone","");
+							}
+							if(id=="commentshow"){
+								for (var i = 0; i < 6; i++) {
+									var j = i + 1;
+									var imgId = "p" + j
+									$('#' + imgId).attr('src', "");
+									$('#' + imgId).hide();
+								}
+								$("#submitComment").val("评价语: ");
+								showStar( "wlsx");
+								showStar("bzwz");
+								showStar("sjtd");
+							}
+							g(id).style.display = 'none';
+							g('mask').style.display = 'none';
+						},
+						show:function(id){
+							if(id=='wlpp'){
+								app.isWlNav=false;
+								app.wlPageHandler(1);
+							}
+							if(id=='sjpp'){
+								if(this.drivers.length<1){
+									return;
+								}
+							}
+							if(id=='sjpp2'){
+								app.isSjNav=false;
+								app.sjPageHandler(1);
+								
+							}
+							if(id=='clpp'){
+								app.isClNav=false;
+								app.clPageHandler(1);
+								
+							}
+							g(id).style.display = 'block';
+						},
+						hide:function(id){
+							if(id=='wlpp'){
+								app.orgNo="";
+							}
+							g(id).style.display = 'none';
+						},
+						deleteRow : function() {
+							var cheboxs = $('#mtable').find('input:checked');
+							if (cheboxs.length != 1) {
+								alert("请选择一条数据！");
+								return;
+							}
+							var index = cheboxs[0].id;
+							var rowData = app.logisticsList[index].logisticsEntity;
+							if (rowData.logisticsStatus != 0) {
+								alert("该条信息正在运输中，无法删除！");
+								return;
+							}
+							if (confirm("您确定要删除物流单号为:" + rowData.logisticsNo
+									+ "信息？") == true) {
+								var formData = {
+									"logisticsId" : rowData.id
+								}
+								formPost4Json("/logistics/deleteLogistics",
+										formData, function(data, httpOptions,
+												status) {
+											if (checkErrorDatas(data,
+													httpOptions)) {
+												alert("删除成功！");
+												app.pageHandler(1);
+											}
+										});
+							}
+						},
+						pageHandler : function(page) {
+							resetCheckBox();
+							this.page = page;
+							var formData = {
+								"currentPage" : page,
+								"pageSize" : this.pageSize,
+								"logisticsNo" : $.trim(this.search.logisticsNo),
+								"expressCompany" : $.trim(this.search.expressCompany),
+								"deliveryOrder" : $.trim(this.search.deliveryOrder),
+								"logisticsStatus" : this.search.logisticsStatus,
+								"client":$.trim(this.search.client),
+								"address":$.trim(this.search.address),
+								"beginTime":getTimeStamp(this.search.beginTime),
+								"endTime":getTimeStamp(this.search.endTime),
+								"timeType":this.search.timeType,
+								"organization":this.search.organization
+							}
+							jsonPost4Json(
+									"/logistics/getLogisticsList",
+									formData,
+									function(data, httpOptions, status) {
+										if (checkErrorDatas(data, httpOptions)) {
+											if (data.logisticsList) {
+												app.logisticsList = data.logisticsList;
+												app.total = data.totalNum;
+												app.maxPage = Math
+														.ceil(app.total
+																/ app.pageSize);
+												if(!app.isInitNav){
+													app.isInitNav=true;
+													if(app.total>0){
+													$('.M-box').pagination({
+												   		 totalData: app.total,
+												   		 showData:app.pageSize,
+														 count:2,
+														 coping:true,
+														 keepShowPN:true,
+												 	     callback: function (api) {
+																app.pageHandler(api.getCurrent());
+												    	 }
+													});
+												}else{
+													$('.M-box').pagination({
+														 pageCount:0,
+												   		 isHide:true,
+														 count:2,
+														 coping:true,
+														 keepShowPN:true,
+												 	     callback: function (api) {
+																app.pageHandler(api.getCurrent());
+												    	 }
+													});
+												}
+												}
+											}
+										}
+									});
+						},
+						wlPageHandler : function(page) {
+							this.getOrgNo(app.addLogistics.organization);
+							this.wlPage = page;
+							var formData = {
+								"currentPage" : this.wlPage,
+								"pageSize" : this.wlPageSize,
+								"orgNo" : app.orgNo,
+								"keyword":this.addLogistics.expressCompany
+							}
+							jsonPost4Json(
+									"/common/getCompanies",
+									formData,
+									function(data, httpOptions, status) {
+										if (checkErrorDatas(data, httpOptions)) {
+											if (data.companies) {
+												app.companies=data.companies;
+												app.wlTotal = data.totalNum;
+												app.wlMaxPage = Math
+														.ceil(app.wlTotal
+																/ app.wlPageSize);
+												if(!app.isWlNav){
+													app.isWlNav=true;
+													if(app.wlTotal>0){
+													$('.M-box1').pagination({
+												   		 totalData: app.wlTotal,
+												   		 showData:app.wlPageSize,
+														 count:0,
+														 keepShowPN:true,
+												 	     callback: function (api) {
+																app.wlPageHandler(api.getCurrent());
+												    	 }
+													});
+												}else{
+													$('.M-box1').pagination({
+														 pageCount:0,
+												   		 isHide:true,
+														 count:2,
+														 coping:true,
+														 keepShowPN:true,
+												 	     callback: function (api) {
+																app.wlPageHandler(api.getCurrent());
+												    	 }
+													});
+												}
+												}
+											}
+										}
+									});
+						},
+						sjPageHandler : function(page) {
+							this.getOrgNo(app.addLogistics.organization);
+							this.sjPage = page;
+							var formData = {
+								"currentPage" : this.sjPage,
+								"pageSize" : this.sjPageSize,
+								"orgNo" : app.orgNo,
+								"keyword":this.addDriver.driverName
+							}
+							jsonPost4Json(
+									"/common/getDriveies",
+									formData,
+									function(data, httpOptions, status) {
+										if (checkErrorDatas(data, httpOptions)) {
+											if (data.driverList) {
+												app.drivers2=data.driverList;
+												app.sjTotal = data.totalNum;
+												app.sjMaxPage = Math
+														.ceil(app.sjTotal
+																/ app.sjPageSize);
+												if(!app.isSjNav){
+													app.isSjNav=true;
+													if(app.sjTotal>0){
+													$('.M-box1').pagination({
+												   		 totalData: app.sjTotal,
+												   		 showData:app.sjPageSize,
+														 count:0,
+														 keepShowPN:true,
+												 	     callback: function (api) {
+																app.sjPageHandler(api.getCurrent());
+												    	 }
+													});
+												}else{
+													$('.M-box1').pagination({
+														 pageCount:0,
+												   		 isHide:true,
+														 count:2,
+														 coping:true,
+														 keepShowPN:true,
+												 	     callback: function (api) {
+																app.sjPageHandler(api.getCurrent());
+												    	 }
+													});
+												}
+												}
+											}
+										}
+									});
+						},
+						clPageHandler : function(page) {
+							this.clPage = page;
+							var formData = {
+								"currentPage" : this.clPage,
+								"pageSize" : this.clPageSize,
+								"keyword":this.addDriver.plate
+							}
+							jsonPost4Json(
+									"/common/getVehicles",
+									formData,
+									function(data, httpOptions, status) {
+										if (checkErrorDatas(data, httpOptions)) {
+											if (data.vehicleList) {
+												app.vehicles=data.vehicleList;
+												app.clTotal = data.totalNum;
+												app.clMaxPage = Math
+														.ceil(app.clTotal
+																/ app.clPageSize);
+												if(!app.isClNav){
+													app.isClNav=true;
+													if(app.clTotal>0){
+													$('.M-box1').pagination({
+												   		 totalData: app.clTotal,
+												   		 showData:app.clPageSize,
+														 count:0,
+														 keepShowPN:true,
+												 	     callback: function (api) {
+																app.clPageHandler(api.getCurrent());
+												    	 }
+													});
+												}else{
+													$('.M-box1').pagination({
+														 pageCount:0,
+												   		 isHide:true,
+														 count:2,
+														 coping:true,
+														 keepShowPN:true,
+												 	     callback: function (api) {
+																app.clPageHandler(api.getCurrent());
+												    	 }
+													});
+												}
+												}
+											}
+										}
+									});
+						}
+
+					},
+					created : function() {
+						formPost4Json("/user/getUserInfo", null, function(data,
+								httpOptions, status) {
+							if (checkErrorDatas(data, httpOptions)) {
+								if (data.user) {
+									app.user = data.user;
+									/* for(var i=0;i<app.user.userPostVos.length;i++){
+										if(app.user.userPostVos[i].postName=="主调度"||
+												app.user.userPostVos[i].postName=="调度员" 
+										){
+											app.isDispatcher=true;
+											break;
+										}
+									} */
+									app.isDispatcher=true;
+									app.search.organization=app.user.userPostVos[0].orgName;
+									app.pageHandler(1);//created  表示页面加载完毕，立即执行
+									
+								}
+							}
+						});
+					}
+				});
+		setCache2SessionStorage("currentUrl","/logisticsManager");
+	});
+	function hideStar(star, id) {
+		for (var i = star + 1; i <= 5; i++) {
+			var imgId = id + i;
+			$("#" + imgId + "").attr("src",
+					"./assets/comment/img/star-off-big.png")
+		}
+	}
+	function showStar(id){
+		for (var i = 1; i <= 5; i++) {
+			var imgId = id + i;
+			$("#" + imgId + "").attr("src",
+					"./assets/comment/img/star-on-big.png")
+		}
+	}
+	
+	function getTimeStamp(date){
+		if(date==""||date==null)
+			return 0;
+		date=date+" 00:00:00";
+		return new Date(date).getTime()/1000;
+	}
+	
+	function checkboxOnclick(checkbox){
+		var cancelflag=true;
+		if(checkbox.checked==true){
+			cancelflag=false;
+		}
+		resetCheckBox();
+		if(!cancelflag)
+			checkbox.checked=true;
+		 
+	}
+	
+	function  resetCheckBox(){
+		var cheboxs = $('#mtable').find('input:checked');
+		for (var i=0;i<cheboxs.length;i++){
+			
+			cheboxs[i].checked=false;
+		}
+	}
+
+	function CheckIsInstall() {	 
+		try{ 
+		     var LODOP=getLodop(); 
+			if (LODOP.VERSION) {
+				 if (LODOP.CVERSION)
+				 alert("当前有C-Lodop云打印可用!\n C-Lodop版本:"+LODOP.CVERSION+"(内含Lodop"+LODOP.VERSION+")"); 
+				 else
+				 alert("本机已成功安装了Lodop控件！\n 版本号:"+LODOP.VERSION); 
+
+			};
+		 }catch(err){ 
+ 		 } 
+	}
+	
+	function saveLocation2Local(){
+		setCache2LocalStorage("printLocation",app.location);
+		alert("保存成功！");
+
+	}
+	function saveEnvelop2Local(){
+		setCache2LocalStorage("printEnvelop",app.envelop);
+		alert("保存成功！");
+
+	}
+	function recognition(text,key){
+		var index=text.indexOf(key); 
+		var content=text.substring(0,index-2);
+		var location=content.substring(content.lastIndexOf("(")+1).split(",")
+		return location;
+	}
+	function checkLocation(location,key){
+		if(location.length!=4){
+			app.location=getCacheFromLocalStorage("printLocation");
+			if(!app.location.entity){
+				var entity={};
+				entity.top=0;
+				entity.left=0;
+				entity.width=800;
+				entity.height=1100;
+				app.location.entity=entity;
+			}
+			alert("识别失败，请确保代码是从打印设计内获取或联系管理员！")
+			return false;
+		}
+		app.location[key].top=location[0];
+		app.location[key].left=location[1];
+		app.location[key].width=location[2];
+		app.location[key].height=location[3];
+		return true;
+	}
+	function checkEnvelop(envelop,key){
+		if(envelop.length!=4){
+			app.envelop=getCacheFromLocalStorage("printEnvelop");
+			alert("识别失败，请确保代码是从打印设计内获取或联系管理员！")
+			return false;
+		}
+		app.envelop[key].top=envelop[0];
+		app.envelop[key].left=envelop[1];
+		app.envelop[key].width=envelop[2];
+		app.envelop[key].height=envelop[3];
+		return true;
+	}
+	
+	/**
+	  *carrier:承运方，ERP-出库单：承运商
+	  *saler：销售组织，ERP-出库单：销售组织
+	  *billNo：运输单号，ERP-出库单：运输单号
+	  *startPoint：始发地,ERP-出库单：福建-惠安；山东-临沂；湖北-汉川；四川-成都/新繁；吉林-长春/德惠	根据发货组织转换
+	  *endPoint：送达地,ERP-出库单：客户名称
+	  *transportationCost：运输费用,运输费用
+	  *wan,qian,bai,shi,ge,jiao,fen:钱单位，万，千，百，十，个，角，分
+	  *receiver：收货人,ERP-出库单：收货联系人
+	  *receivePhone：收货电话,ERP-出库单：收货电话
+	  *receiveAddress：收货地址,ERP-出库单：收货地址
+	  *driver：司机联系人,ERP-出库单：司机联系人
+	  *qrImg：二维码地址
+	  *
+	  */
+	function  createPrintPage(carrier,saler,billNo,startPoint,endPoint,
+			transportationCost,wan,qian,bai,shi,ge,jiao,fen,receiver,receivePhone,
+			receiveAddress,driver,payMethod,qrImg,carrier2,saler2,date,year,month,day,cub,saleQty,otherQty,allQty,unitprice
+			,idCard1,idCard2,engineNo,plate,vehicleType){
+		var location=getCacheFromLocalStorage("printLocation");
+		if(location){
+			app.location=location;
+			if(!app.location.entity){
+				var entity={};
+				entity.top=0;
+				entity.left=0;
+				entity.width=800;
+				entity.height=1100;
+				app.location.entity=entity;
+			}
+		}
+		var imgUrl ="<img src='"+ window.location.protocol + "//"
+		+ window.location.host+"/assets/img/print.jpg'></img>";
+		var qrUrl="<img src='"+qrImg+"' width='"+app.location.qrUrl.width+"' height='"+app.location.qrUrl.height+"px'></img>"
+		LODOP.PRINT_INITA(app.location.entity.top,app.location.entity.left,app.location.entity.width,app.location.entity.height,"套打货物运输合同的模板");
+		LODOP.ADD_PRINT_SETUP_BKIMG(imgUrl);
+		LODOP.SET_SHOW_MODE("BKIMG_IN_PREVIEW",true);
+	    LODOP.SET_PRINT_STYLE("FontSize", app.location.fontSize); //字体大小
+		LODOP.ADD_PRINT_IMAGE(app.location.qrUrl.top,app.location.qrUrl.left,app.location.qrUrl.width,app.location.qrUrl.height,qrUrl);
+		LODOP.ADD_PRINT_TEXT(app.location.saler.top,app.location.saler.left,app.location.saler.width,app.location.saler.height,saler);
+		LODOP.ADD_PRINT_TEXT(app.location.carrier.top,app.location.carrier.left,app.location.carrier.width,app.location.carrier.height,carrier);
+		LODOP.ADD_PRINT_TEXT(app.location.billNo.top,app.location.billNo.left,app.location.billNo.width,app.location.billNo.height,billNo);
+		LODOP.ADD_PRINT_TEXT(app.location.startPoint.top,app.location.startPoint.left,app.location.startPoint.width,app.location.startPoint.height,startPoint);
+		LODOP.ADD_PRINT_TEXT(app.location.endPoint.top,app.location.endPoint.left,app.location.endPoint.width,app.location.endPoint.height,endPoint);
+		LODOP.ADD_PRINT_TEXT(app.location.transportationCost.top,app.location.transportationCost.left,app.location.transportationCost.width,app.location.transportationCost.height,transportationCost);
+		LODOP.ADD_PRINT_TEXT(app.location.wan.top,app.location.wan.left,app.location.wan.width,app.location.wan.height,wan);
+		LODOP.ADD_PRINT_TEXT(app.location.qian.top,app.location.qian.left,app.location.qian.width,app.location.qian.height,qian);
+		LODOP.ADD_PRINT_TEXT(app.location.bai.top,app.location.bai.left,app.location.bai.width,app.location.bai.height,bai);
+		LODOP.ADD_PRINT_TEXT(app.location.shi.top,app.location.shi.left,app.location.shi.width,app.location.shi.height,shi);
+		LODOP.ADD_PRINT_TEXT(app.location.ge.top,app.location.ge.left,app.location.ge.width,app.location.ge.height,ge);
+		LODOP.ADD_PRINT_TEXT(app.location.jiao.top,app.location.jiao.left,app.location.jiao.width,app.location.jiao.height,jiao);
+		LODOP.ADD_PRINT_TEXT(app.location.fen.top,app.location.fen.left,app.location.fen.width,app.location.fen.height,fen);
+		LODOP.ADD_PRINT_TEXT(app.location.receiver.top,app.location.receiver.left,app.location.receiver.width,app.location.receiver.height,receiver);
+		LODOP.ADD_PRINT_TEXT(app.location.receivePhone.top,app.location.receivePhone.left,app.location.receivePhone.width,app.location.receivePhone.height,receivePhone);
+		LODOP.ADD_PRINT_TEXT(app.location.receiveAddress.top,app.location.receiveAddress.left,app.location.receiveAddress.width,app.location.receiveAddress.height,receiveAddress);
+		LODOP.ADD_PRINT_TEXT(app.location.driver.top,app.location.driver.left,app.location.driver.width,app.location.driver.height,driver);
+		LODOP.ADD_PRINT_TEXT(app.location.saler2.top,app.location.saler2.left,app.location.saler2.width,app.location.saler2.height,saler2);
+		LODOP.ADD_PRINT_TEXT(app.location.carrier2.top,app.location.carrier2.left,app.location.carrier2.width,app.location.carrier2.height,carrier2);
+		LODOP.ADD_PRINT_TEXT(app.location.payMethod.top,app.location.payMethod.left,app.location.payMethod.width,app.location.payMethod.height,payMethod);
+		LODOP.ADD_PRINT_TEXT(app.location.cub.top,app.location.cub.left,app.location.cub.width,app.location.cub.height,cub);
+		LODOP.ADD_PRINT_TEXT(app.location.unitprice.top,app.location.unitprice.left,app.location.unitprice.width,app.location.unitprice.height,unitprice);
+		LODOP.ADD_PRINT_TEXT(app.location.saleQty.top,app.location.saleQty.left,app.location.saleQty.width,app.location.saleQty.height,saleQty);
+		LODOP.ADD_PRINT_TEXT(app.location.otherQty.top,app.location.otherQty.left,app.location.otherQty.width,app.location.otherQty.height,otherQty);
+		LODOP.ADD_PRINT_TEXT(app.location.allQty.top,app.location.allQty.left,app.location.allQty.width,app.location.allQty.height,allQty);
+		LODOP.ADD_PRINT_TEXT(app.location.date.top,app.location.date.left,app.location.date.width,app.location.date.height,date);
+		LODOP.ADD_PRINT_TEXT(app.location.year.top,app.location.year.left,app.location.year.width,app.location.year.height,year);
+		LODOP.ADD_PRINT_TEXT(app.location.month.top,app.location.month.left,app.location.month.width,app.location.month.height,month);
+		LODOP.ADD_PRINT_TEXT(app.location.day.top,app.location.day.left,app.location.day.width,app.location.day.height,day);
+		
+		
+		LODOP.ADD_PRINT_TEXT(app.location.idCard1.top,app.location.idCard1.left,app.location.idCard1.width,app.location.idCard1.height,idCard1);
+		LODOP.ADD_PRINT_TEXT(app.location.idCard2.top,app.location.idCard2.left,app.location.idCard2.width,app.location.idCard2.height,idCard2);
+		LODOP.ADD_PRINT_TEXT(app.location.plate.top,app.location.plate.left,app.location.plate.width,app.location.plate.height,plate);
+		LODOP.ADD_PRINT_TEXT(app.location.vehicleType.top,app.location.vehicleType.left,app.location.vehicleType.width,app.location.vehicleType.height,vehicleType);
+		LODOP.ADD_PRINT_TEXT(app.location.engineNo.top,app.location.engineNo.left,app.location.engineNo.width,app.location.engineNo.height,engineNo);
+		
+		
+		//LODOP.ADD_PRINT_TEXT(112,594,131,25,"签约时间");
+	}
+
+	function design(){
+		var carrier="承运商1";
+		var saler="销售组织1";
+		var billNo="运单号";
+		var startPoint="始发地";
+		var endPoint="目的地";
+		var transportationCost="运输费用";
+		var wan="万";
+		var qian="千";
+		var bai="百";
+		var shi="十";
+		var ge="个";
+		var jiao="角";
+		var fen="分";
+		var receiver="收货人";
+		var receivePhone="电话";
+		var receiveAddress="地址";
+		var driver="司机姓名";
+		var payMethod="付款方式";
+		var url = window.location.protocol + "//" + window.location.host;
+		var qrImg=url + "/getQrCode?info=" + url
+		+ "/c2?e=" + app.node.expressEntity.id + "&t="
+		+ app.node.expressEntity.token;
+		var carrier2="承运商2";
+		var saler2="销售组织2";
+		var date="日期";
+		var year="年";
+		var  month="月";
+		var day="日";
+		var cub="方数";
+		var saleQty="运输数量";
+		var otherQty="其它数量";
+		var allQty="合计数量";
+		var unitPrice="单价";
+		var  idCard1="身份证号";
+		var idCard2="驾驶证号";
+		var engineNo="发动机号";
+		var plate="车牌号";
+		var vehicleType="车辆类型";
+		
+		createPrintPage(carrier,saler,billNo,startPoint,endPoint,
+				transportationCost,wan,qian,bai,shi,ge,jiao,fen,receiver,receivePhone,
+				receiveAddress,driver,payMethod,qrImg,carrier2,saler2,date,year,month,day,cub,saleQty,otherQty,allQty,unitPrice,idCard1,idCard2,engineNo,plate,vehicleType);
+		LODOP.PRINT_DESIGN();
+	}
+
+	function printPagePreview(){
+		var carrier=app.stock.carrier;
+		var saler=app.stock.saler;
+		var billNo=app.stock.billNo;
+		var startPoint=app.stock.startPoint;
+		var endPoint=app.stock.endPoint;
+		var transportationCost=app.stock.transportationCost;
+		var wan=app.stock.wan;
+		var qian=app.stock.qian;
+		var bai=app.stock.bai;
+		var shi=app.stock.shi;
+		var ge=app.stock.ge;
+		var jiao=app.stock.jiao;
+		var fen=app.stock.fen;
+		var receiver=app.stock.receiver;
+		var receivePhone=app.stock.receivePhone;
+		var receiveAddress=app.stock.receiveAddress;
+		var driver=app.stock.driver;
+		var payMethod=app.stock.payMethod;
+		var carrier2=app.stock.carrier;
+		var saler2=app.stock.saler;
+		var cub=app.stock.cub;
+		var saleQty=app.stock.saleQty;
+		var otherQty=app.stock.otherQty;
+		var allQty=saleQty+otherQty;
+		var unitPrice="";
+		
+		var  idCard1=app.stock.idCard;
+		var idCard2=app.stock.idCard;
+		var engineNo=app.stock.engineNo;
+		var plate=app.stock.plate;
+		var vehicleType=app.stock.vehicleType;
+		
+		var date2 = new Date();
+        var seperator1 = "-";
+        var year = date2.getFullYear();
+        var month = date2.getMonth() + 1;
+        var strDate = date2.getDate();
+        if (month >= 1 && month <= 9) {
+            month = "0" + month;
+        }
+        if (strDate >= 0 && strDate <= 9) {
+            strDate = "0" + strDate;
+        }
+		var date= year + seperator1 + month + seperator1 + strDate;
+		
+		var day=strDate
+		
+		var url = window.location.protocol + "//" + window.location.host;
+		
+		var qrImg=url + "/getQrCode?info=" + url
+		+ "/c2?e=" + app.node.expressEntity.id + "&t="
+		+ app.node.expressEntity.token;
+		createPrintPage(carrier,saler,billNo,startPoint,endPoint,
+				transportationCost,wan,qian,bai,shi,ge,jiao,fen,receiver,receivePhone,
+				receiveAddress,driver,payMethod,qrImg,carrier2,saler2,date,year,month,day,cub,saleQty,otherQty,allQty,unitPrice,idCard1,idCard2,engineNo,plate,vehicleType);
+		LODOP.PREVIEW();
+	}
+	
+	
+	function envelopDesign(){
+		var client="客户名称";
+		var receiver="收货人和号码";
+		var address="收货地址";
+        var mark="到货请扫码";
+		createEnvelopPrintPage(client,receiver,address,mark);
+		LODOP.PRINT_DESIGN();
+	}
+	
+	function envelopPreview(){
+		var client=app.stock.endPoint;
+		var receiver=app.stock.receiver+" "+app.stock.receivePhone;
+		var address=app.stock.receiveAddress;
+        var mark="到货请扫码!!";
+		createEnvelopPrintPage(client,receiver,address,mark);
+		LODOP.PREVIEW();
+	}
+	
+	
+	function  createEnvelopPrintPage(client,receiver,address,mark){
+		
+		var envelop=getCacheFromLocalStorage("printEnvelop");
+		if(envelop){
+			app.envelop=envelop;
+		}
+	
+		LODOP.PRINT_INITA(app.envelop.entity.top,app.envelop.entity.left,app.envelop.entity.width,app.envelop.entity.height,"信封模板");
+/* 		LODOP.ADD_PRINT_SETUP_BKIMG("E://111.jpg");
+		LODOP.SET_SHOW_MODE("BKIMG_IN_PREVIEW",true); */
+	    LODOP.SET_PRINT_STYLE("FontSize", app.envelop.fontSize); //字体大小
+	    LODOP.ADD_PRINT_TEXT(app.envelop.client.top,app.envelop.client.left,app.envelop.client.width,app.envelop.client.height,client);
+	    LODOP.ADD_PRINT_TEXT(app.envelop.receiver.top,app.envelop.receiver.left,app.envelop.receiver.width,app.envelop.receiver.height,receiver);
+	    LODOP.ADD_PRINT_TEXT(app.envelop.address.top,app.envelop.address.left,app.envelop.address.width,app.envelop.address.height,address);
+	    LODOP.ADD_PRINT_TEXT(app.envelop.mark.top,app.envelop.mark.left,app.envelop.mark.width,app.envelop.mark.height,mark);
+		//LODOP.ADD_PRINT_TEXT(112,594,131,25,"签约时间");
+	}
+
+</script>

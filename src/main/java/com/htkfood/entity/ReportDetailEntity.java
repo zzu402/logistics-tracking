@@ -1,0 +1,202 @@
+package com.htkfood.entity;
+
+public class ReportDetailEntity {
+	private Long logisticsId;
+	private String logisticsNo;
+	private String expressCompany;
+	private String driverName;
+	private String driverPhone;
+	private Long dispatchTime;//派车时间
+	private Long arriveTime;//到厂时间戳
+	private Long shipmentTime;//装载时间
+	private Long leaveTime;//出厂时间戳
+	private Long  deliveryTime;//送达时间戳
+	private Long inFactoryTime;//在厂时间，秒
+	private Long transportTime;//运输时间。秒
+	private Long expressId;
+	private String deliveryOrder;
+	private String client;//客户
+	private String receiver;//收货人
+	private String receiverPhone;//收货人dianhua
+	private Long commentId;
+	private String  comment;//评价
+	private Integer timelinessScore;//时效性评分
+	private Integer wholenessScore;//完整性评分
+	private Integer serveScore;//服务态度评分
+	private String imgs;//图片
+	private String province;//客户所在的省份
+	private String city;//客户所在的区域
+	
+	
+	
+	
+
+	public String getProvince() {
+		return province;
+	}
+
+	public void setProvince(String province) {
+		this.province = province;
+	}
+
+	public String getCity() {
+		return city;
+	}
+
+	public void setCity(String city) {
+		this.city = city;
+	}
+
+	public String getImgs() {
+		return imgs;
+	}
+
+	public void setImgs(String imgs) {
+		this.imgs = imgs;
+	}
+
+	public String getDeliveryOrder() {
+		return deliveryOrder;
+	}
+
+	public void setDeliveryOrder(String deliveryOrder) {
+		this.deliveryOrder = deliveryOrder;
+	}
+
+	public String getReceiverPhone() {
+		return receiverPhone;
+	}
+
+	public void setReceiverPhone(String receiverPhone) {
+		this.receiverPhone = receiverPhone;
+	}
+
+	public Long getLogisticsId() {
+		return logisticsId;
+	}
+	
+	public String getDriverPhone() {
+		return driverPhone;
+	}
+
+	public void setDriverPhone(String driverPhone) {
+		this.driverPhone = driverPhone;
+	}
+
+	public void setLogisticsId(Long logisticsId) {
+		this.logisticsId = logisticsId;
+	}
+	
+	public String getLogisticsNo() {
+		return logisticsNo;
+	}
+	public void setLogisticsNo(String logisticsNo) {
+		this.logisticsNo = logisticsNo;
+	}
+	public String getExpressCompany() {
+		return expressCompany;
+	}
+	public void setExpressCompany(String expressCompany) {
+		this.expressCompany = expressCompany;
+	}
+	public String getDriverName() {
+		return driverName;
+	}
+	public void setDriverName(String driverName) {
+		this.driverName = driverName;
+	}
+	public Long getDispatchTime() {
+		return dispatchTime;
+	}
+	public void setDispatchTime(Long dispatchTime) {
+		this.dispatchTime = dispatchTime;
+	}
+	public Long getArriveTime() {
+		return arriveTime;
+	}
+	public void setArriveTime(Long arriveTime) {
+		this.arriveTime = arriveTime;
+	}
+	public Long getShipmentTime() {
+		return shipmentTime;
+	}
+	public void setShipmentTime(Long shipmentTime) {
+		this.shipmentTime = shipmentTime;
+	}
+	public Long getLeaveTime() {
+		return leaveTime;
+	}
+	public void setLeaveTime(Long leaveTime) {
+		this.leaveTime = leaveTime;
+	}
+	public Long getDeliveryTime() {
+		return deliveryTime;
+	}
+	public void setDeliveryTime(Long deliveryTime) {
+		this.deliveryTime = deliveryTime;
+	}
+	public Long getInFactoryTime() {
+		return inFactoryTime;
+	}
+	public void setInFactoryTime(Long inFactoryTime) {
+		this.inFactoryTime = inFactoryTime;
+	}
+	public Long getTransportTime() {
+		return transportTime;
+	}
+	public void setTransportTime(Long transportTime) {
+		this.transportTime = transportTime;
+	}
+	public Long getExpressId() {
+		return expressId;
+	}
+	public void setExpressId(Long expressId) {
+		this.expressId = expressId;
+	}
+	public String getClient() {
+		return client;
+	}
+	public void setClient(String client) {
+		this.client = client;
+	}
+	public String getReceiver() {
+		return receiver;
+	}
+	public void setReceiver(String receiver) {
+		this.receiver = receiver;
+	}
+	public Long getCommentId() {
+		return commentId;
+	}
+	public void setCommentId(Long commentId) {
+		this.commentId = commentId;
+	}
+	public String getComment() {
+		return comment;
+	}
+	public void setComment(String comment) {
+		this.comment = comment;
+	}
+	public Integer getTimelinessScore() {
+		return timelinessScore;
+	}
+	public void setTimelinessScore(Integer timelinessScore) {
+		this.timelinessScore = timelinessScore;
+	}
+	public Integer getWholenessScore() {
+		return wholenessScore;
+	}
+	public void setWholenessScore(Integer wholenessScore) {
+		this.wholenessScore = wholenessScore;
+	}
+	public Integer getServeScore() {
+		return serveScore;
+	}
+	public void setServeScore(Integer serveScore) {
+		this.serveScore = serveScore;
+	}
+	
+	
+	
+
+}

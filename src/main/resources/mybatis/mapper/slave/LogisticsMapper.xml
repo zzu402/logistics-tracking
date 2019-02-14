@@ -1,0 +1,356 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.htkfood.mapper.slave.LogisticsMapper">
+	<sql id="Base_Column_List">
+		l.id,
+		l.userId,l.logisticsNo,l.expressCompany,l.driverName,l.organization,l.userName,
+		l.driverPhone,l.createTime,l.updateTime,l.logisticsStatus,l.driverId,
+		l.dispatchTime,l.arriveTime,l.shipmentTime,l.leaveTime,l.deliveryTime,l.accessToken,
+		e.id as eId, e.logisticsId,e.deliveryOrder,e.client,
+		e.receiver,e.receiverPhone,e.receiveAddress,e.status,
+		l.destination,
+		l.createTime as eCreateTime,e.updateTime as
+		eUpdateTime,e.token,e.employeeName,e.employeePhone,d.name,d.phone,e.transportNo
+	</sql>
+	<resultMap type="com.htkfood.entity.LogisticsEntity" id="logisticsMap">
+		<id property="id" column="id" />
+		<result property="userId" column="userId" />
+		<result property="userName" column="userName" />
+		<result property="logisticsNo" column="logisticsNo" />
+		<result property="expressCompany" column="expressCompany" />
+		<result property="driverName" column="driverName" />
+		<result property="organization" column="organization" />
+		<result property="driverPhone" column="driverPhone" />
+		<result property="createTime" column="createTime" />
+		<result property="updateTime" column="updateTime" />
+		<result property="logisticsStatus" column="logisticsStatus" />
+		<result property="driverId" column="driverId" />
+		<result property="dispatchTime" column="dispatchTime" />
+		<result property="arriveTime" column="arriveTime" />
+		<result property="shipmentTime" column="shipmentTime" />
+		<result property="leaveTime" column="leaveTime" />
+		<result property="deliveryTime" column="deliveryTime" />
+		<result property="accessToken" column="accessToken" />
+		<result property="destination" column="destination" />
+		<result property="name" column="name" />
+		<result property="phone" column="phone" />
+		<collection property="expressEntity" ofType="com.htkfood.entity.ExpressEntity">
+			<result property="id" column="eId" />
+			<result property="logisticsId" column="logisticsId" />
+			<result property="deliveryOrder" column="deliveryOrder" />
+			<result property="client" column="client" />
+			<result property="receiver" column="receiver" />
+			<result property="receiverPhone" column="receiverPhone" />
+			<result property="receiveAddress" column="receiveAddress" />
+			<result property="status" column="status" />
+			<result property="createTime" column="eCreateTime" />
+			<result property="updateTime" column="eUpdateTime" />
+			<result property="token" column="token" />
+			<result property="employeeName" column="employeeName" />
+			<result property="employeePhone" column="employeePhone" />
+			<result property="transportNo" column="transportNo" />
+		</collection>
+	</resultMap>
+
+	<select id="getLogistics" parameterType="com.htkfood.mapper.Criteria"
+		resultMap="logisticsMap">
+		SELECT
+		<include refid="Base_Column_List" />
+		FROM htk_logistics l
+		LEFT JOIN htk_express e on l.id=e.logisticsId
+		LEFT JOIN htk_logistics_driver d on l.driverId=d.id
+		WHERE 1=1
+		and l.isDelete=0
+		<if test="condition.userId != null">
+			and l.userId = #{condition.userId}
+		</if>
+		<if test="condition.userName != null">
+			and l.userName = #{condition.userName}
+		</if>
+		<if test="condition.id != null">
+			and l.id = #{condition.id}
+		</if>
+		<if test="condition.logisticsNo != null">
+			and l.logisticsNo like #{condition.logisticsNo}
+		</if>
+		<if test="condition.organization != null">
+			and l.organization like #{condition.organization}
+		</if>
+		<if test="condition.expressCompany != null">
+			and l.expressCompany like #{condition.expressCompany}
+		</if>
+		<if test="condition.driverName != null">
+			and l.driverName like #{condition.driverName}
+		</if>
+		<if test="condition.driverPhone != null">
+			and l.driverPhone like #{condition.driverPhone}
+		</if>
+		<if test="condition.logisticsStatus != null">
+			and l.logisticsStatus = #{condition.logisticsStatus}
+		</if>
+		<if test="condition.deliveryOrder != null">
+			and e.deliveryOrder like #{condition.deliveryOrder}
+		</if>
+		<if test="condition.client != null">
+			and e.client like #{condition.client}
+		</if>
+		<if test="condition.address != null">
+			and e.receiveAddress like #{condition.address}
+		</if>
+		<if test="condition.accessToken != null">
+			and e.accessToken = #{condition.accessToken}
+		</if>
+		<if test="condition.beginCreateTime != null">
+			and l.createTime <![CDATA[>=]]> #{condition.beginCreateTime}
+		</if>
+		<if test="condition.endCreateTime != null">
+			and l.createTime <![CDATA[<]]> #{condition.endCreateTime}
+		</if>
+		<if test="condition.beginArriveTime != null">
+			and l.arriveTime <![CDATA[>=]]> #{condition.beginArriveTime}
+		</if>
+		<if test="condition.endArriveTime != null">
+			and l.arriveTime <![CDATA[<]]> #{condition.endArriveTime}
+		</if>
+		<if test="condition.beginShipmentTime != null">
+			and l.shipmentTime <![CDATA[>=]]> #{condition.beginShipmentTime}
+		</if>
+		<if test="condition.endShipmentTime != null">
+			and l.shipmentTime <![CDATA[<]]> #{condition.endShipmentTime}
+		</if>
+		<if test="condition.beginLeaveTime != null">
+			and l.leaveTime <![CDATA[>=]]> #{condition.beginLeaveTime}
+		</if>
+		<if test="condition.endLeaveTime != null">
+			and l.leaveTime <![CDATA[<]]> #{condition.endLeaveTime}
+		</if>
+		<if test="condition.beginDispatchTime != null">
+			and l.dispatchTime <![CDATA[>=]]> #{condition.beginDispatchTime}
+		</if>
+		<if test="condition.endDispatchTime != null">
+			and l.dispatchTime <![CDATA[<]]> #{condition.endDispatchTime}
+		</if>
+		<if test="condition.beginDeliveryTime != null">
+			and l.deliveryTime <![CDATA[>=]]> #{condition.beginDeliveryTime}
+		</if>
+		<if test="condition.endDeliveryTime != null">
+			and l.deliveryTime <![CDATA[<]]> #{condition.endDeliveryTime}
+		</if>
+		order by l.createTime desc
+
+	</select>
+
+
+	<insert id="insertByEntity" parameterType="com.htkfood.entity.LogisticsEntity"   useGeneratedKeys="true" keyProperty="id" >
+	    <selectKey keyProperty="id"  order="BEFORE" resultType="Long">
+             select max(id)+1 as newId from htk_logistics
+    	</selectKey>
+		insert into htk_logistics
+		<trim prefix="(" suffix=")" suffixOverrides=",">
+			<if test="id!=null">
+				id,
+			</if>
+			<if test="organization != null">
+				organization,
+			</if>
+			<if test="userId != null">
+				userId,
+			</if>
+			<if test="userName != null">
+				userName,
+			</if>
+			<if test="logisticsNo != null">
+				logisticsNo,
+			</if>
+			<if test="expressCompany != null">
+				expressCompany,
+			</if>
+			<if test="driverName != null">
+				driverName,
+			</if>
+			<if test="driverPhone != null">
+				driverPhone,
+			</if>
+			<if test="createTime != null">
+				createTime,
+			</if>
+			<if test="updateTime != null">
+				updateTime,
+			</if>
+			<if test="logisticsStatus != null">
+				logisticsStatus,
+			</if>
+			<if test="dispatchTime != null">
+				dispatchTime,
+			</if>
+			<if test="arriveTime != null">
+				arriveTime,
+			</if>
+			<if test="shipmentTime != null">
+				shipmentTime,
+			</if>
+			<if test="leaveTime != null">
+				leaveTime,
+			</if>
+			<if test="deliveryTime != null">
+				deliveryTime,
+			</if>
+			<if test="accessToken != null">
+				accessToken,
+			</if>
+			<if test="destination != null">
+				destination,
+			</if>
+			<if test="isDelete != null">
+				isDelete,
+			</if>
+			<if test="isUpdate != null">
+				isUpdate,
+			</if>
+		</trim>
+		<trim prefix=" values ( " suffix=")" suffixOverrides=",">
+			<if test="id !=null">
+				#{id},
+			</if>
+			<if test="organization != null">
+				#{organization},
+			</if>
+			<if test="userId != null">
+				#{userId},
+			</if>
+			<if test="userName != null">
+				#{userName},
+			</if>
+			<if test="logisticsNo != null">
+				#{logisticsNo},
+			</if>
+			<if test="expressCompany != null">
+				#{expressCompany},
+			</if>
+			<if test="driverName != null">
+				#{driverName},
+			</if>
+			<if test="driverPhone != null">
+				#{driverPhone},
+			</if>
+			<if test="createTime != null">
+				#{createTime},
+			</if>
+			<if test="updateTime != null">
+				#{updateTime},
+			</if>
+			<if test="logisticsStatus != null">
+				#{logisticsStatus},
+			</if>
+			<if test="dispatchTime != null">
+				#{dispatchTime},
+			</if>
+			<if test="arriveTime != null">
+				#{arriveTime},
+			</if>
+			<if test="shipmentTime != null">
+				#{shipmentTime},
+			</if>
+			<if test="leaveTime != null">
+				#{leaveTime},
+			</if>
+			<if test="deliveryTime != null">
+				#{deliveryTime},
+			</if>
+			<if test="accessToken != null">
+				#{accessToken},
+			</if>
+			<if test="destination != null">
+				#{destination},
+			</if>
+			<if test="isDelete != null">
+				#{isDelete},
+			</if>
+			<if test="isUpdate != null">
+				#{isUpdate},
+			</if>
+		</trim>
+	</insert>
+
+	<update id="updateByEntity" parameterType="com.htkfood.entity.LogisticsEntity">
+		update htk_logistics
+		<set>
+			<if test="userId != null">
+				userId = #{userId},
+			</if>
+			<if test="userName != null">
+				userName = #{userName},
+			</if>
+			<if test="logisticsNo != null">
+				logisticsNo = #{logisticsNo},
+			</if>
+			<if test="organization != null">
+				organization = #{organization},
+			</if>
+			<if test="expressCompany != null">
+				expressCompany = #{expressCompany},
+			</if>
+			<if test="driverName != null">
+				driverName = #{driverName},
+			</if>
+			<if test="driverPhone != null">
+				driverPhone = #{driverPhone},
+			</if>
+			<if test="updateTime != null">
+				updateTime = #{updateTime},
+			</if>
+			<if test="logisticsStatus != null">
+				logisticsStatus = #{logisticsStatus},
+			</if>
+			<if test="dispatchTime != null">
+				dispatchTime = #{dispatchTime},
+			</if>
+			<if test="arriveTime != null">
+				arriveTime = #{arriveTime},
+			</if>
+			<if test="shipmentTime != null">
+				shipmentTime = #{shipmentTime}
+			</if>
+			<if test="leaveTime != null">
+				leaveTime = #{leaveTime},
+			</if>
+			<if test="deliveryTime != null">
+				deliveryTime = #{deliveryTime},
+			</if>
+			<if test="accessToken != null">
+				accessToken = #{accessToken},
+			</if>
+			<if test="destination != null">
+				destination = #{destination},
+			</if>
+			<if test="isDelete != null">
+				isDelete = #{isDelete},
+			</if>
+			<if test="isUpdate != null">
+				isUpdate = #{isUpdate},
+			</if>
+			<if test="driverId != null">
+				driverId  = #{driverId },
+			</if>
+			<if test="plate != null">
+				plate = #{plate},
+			</if>
+			<if test="vehicleType != null">
+				vehicleType = #{vehicleType},
+			</if>
+			<if test="owner != null">
+				owner = #{owner},
+			</if>
+			<if test="engineNo != null">
+				engineNo = #{engineNo},
+			</if>
+		</set>
+		where id = #{id}
+	</update>
+
+	<delete id="deleteById" parameterType="Long">
+		delete from htk_logistics
+		where id = #{id}
+	</delete>
+
+</mapper>

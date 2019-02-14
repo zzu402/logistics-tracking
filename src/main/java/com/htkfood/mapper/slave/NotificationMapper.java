@@ -1,0 +1,35 @@
+package com.htkfood.mapper.slave;
+
+import java.util.List;
+
+import com.htkfood.entity.NotificationEntity;
+import com.htkfood.mapper.Criteria;
+
+/**
+ * 关于Notification表的操作，包括增删改查
+ * @author Administrator
+ */
+public interface NotificationMapper {
+	/**
+	 * 获取Logistics
+	 * @return
+	 */
+	List<NotificationEntity>  getNotification(Criteria criteria);
+	/*
+	 * 添加
+	 */
+	int insertByEntity(NotificationEntity notificationEntity);
+	/*
+	 * 更新
+	 */
+	int updateByEntity(NotificationEntity notificationEntity);
+	/**
+	 * 刪除
+	 * @param id
+	 * @return
+	 */
+	int deleteById(Long id);
+	
+
+
+}

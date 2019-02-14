@@ -1,0 +1,329 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>回头客物流跟踪系统</title>
+<link rel="stylesheet" href="../assets/css/bootstrap.css" />
+<link rel="stylesheet" href="../assets/css/css.css" />
+<link rel="stylesheet" href="../assets/css/dialog.css" />
+<link rel="stylesheet" href="../assets/css/pagination.css" />
+<script src="../assets/js/jquery-1.10.2.js"></script>
+<script src="../assets/js/bootstrap.min.js"></script>
+<script src="../assets/js/httpUtil.js"></script>
+<script src="../assets/js/common.js"></script>
+<script src="../assets/js/vue.js"></script>
+<script src="../assets/js/dialog.js"></script>
+<script src="../assets/js/jquery.pagination.js"></script>
+<style type="text/css">
+[v-cloak] {
+	display: none !important;
+}
+</style>
+</head>
+<body>
+	<div class="title_right">
+		<strong>报表统计明細</strong>
+	</div>
+	<div id="app" v-cloak>
+		<div style="width: 95%; margin: auto;">
+			<table class="table table-bordered"  id="mtable">
+				<tr>
+					<td align="center" nowrap="nowrap" bgcolor="#f1f1f1">物流单号</td>
+					<td align="center" nowrap="nowrap" bgcolor="#f1f1f1">出库单号</td>
+					<td align="center" nowrap="nowrap" bgcolor="#f1f1f1">承运单位</td>
+					<td align="center" nowrap="nowrap" bgcolor="#f1f1f1">司机</td>
+					<td align="center" nowrap="nowrap" bgcolor="#f1f1f1">派车时间</td>
+					<td align="center" nowrap="nowrap" bgcolor="#f1f1f1">进厂时间</td>
+					<td align="center" nowrap="nowrap" bgcolor="#f1f1f1">出厂时间</td>
+					<td align="center" nowrap="nowrap" bgcolor="#f1f1f1">送达时间</td>
+					<td align="center" nowrap="nowrap" bgcolor="#f1f1f1">在厂时间</td>
+					<td align="center" nowrap="nowrap" bgcolor="#f1f1f1">运输时间</td>
+					<td align="center" nowrap="nowrap" bgcolor="#f1f1f1">客户</td>
+					<td align="center" nowrap="nowrap" bgcolor="#f1f1f1">收货人</td>
+					<td align="center" nowrap="nowrap" bgcolor="#f1f1f1">评价语</td>
+					<td align="center" nowrap="nowrap" bgcolor="#f1f1f1">物流分数</td>
+					<td align="center" nowrap="nowrap" bgcolor="#f1f1f1">包装分数</td>
+					<td align="center" nowrap="nowrap" bgcolor="#f1f1f1">服务分数</td>
+					<td align="center" nowrap="nowrap" bgcolor="#f1f1f1">图片</td>
+				</tr>
+				<tr v-for="(reportDetail,index) in reportDetailList">
+					<td width="6%" align="center">{{reportDetail.logisticsNo}}</td>
+					<td width="6%" align="center">{{reportDetail.deliveryOrder}}</td>
+					<td width="10%" align="center">{{reportDetail.expressCompany}}</td>
+					<td width="5%" align="center">{{reportDetail.driverName}}</td>
+					<td width="7%" align="center">{{reportDetail.dispatchTime |
+						date}}</td>
+					<td width="7%" align="center">{{reportDetail.arriveTime |
+						date}}</td>
+					<td width="7%" align="center">{{reportDetail.leaveTime |
+						date}}</td>
+					<td width="7%" align="center">{{reportDetail.deliveryTime |
+						date}}</td>
+					<td width="5%" align="center">{{reportDetail.inFactoryTime |
+						time}}</td>
+					<td width="5%" align="center">{{reportDetail.transportTime
+						|time}}</td>
+					<td width="10%" align="center">{{reportDetail.client}}</td>
+					<td width="5%" align="center">{{reportDetail.receiver}}</td>
+					<td width="18%"  align="center">{{reportDetail.comment | content}}</td>
+					<td width="5%" align="center">{{reportDetail.timelinessScore}}</td>
+					<td width="5%" align="center">{{reportDetail.wholenessScore}}</td>
+					<td width="5%" align="center">{{reportDetail.serveScore}}</td>
+					<td width="6%" align="center"><a @click="queryImgs(index)">查看</a>{{reportDetail.imgs | imgNum}}张</td>
+				</tr>
+			</table>
+			<div align="center">
+				<!-- <zpagenav v-bind:page="page" v-bind:page-size="pageSize"
+					v-bind:total="total" v-bind:max-page="maxPage"
+					v-on:pagehandler="pageHandler"> </zpagenav> -->
+					<div class="m-style M-box"></div>
+			</div>
+		</div>
+		<div class="ui-mask" id="mask" onselectstart="return false"></div>
+		<div class="ui-dialog" id="imgshow" onselectstart='return false;'>
+			<div class="ui-dialog-title" id="dialogDrag"
+				onselectstart="return false;">
+				图片信息 <a class="ui-dialog-closebutton" @click="hideDiv('imgshow')"></a>
+
+			</div>
+			<div class="ui-dialog-content">
+				<div>
+					<img
+						style="width: 25%; height: 150px; margin: 10px; display: none;"
+						id="p1" @click="showBigImg('#outerdiv', '#innerdiv', '#bigimg','p1')"/> <img
+						style="width: 25%; height: 150px; margin: 10px; display: none;"
+						id="p2" @click="showBigImg('#outerdiv', '#innerdiv', '#bigimg','p2')"/> <img
+						style="width: 25%; height: 150px; margin: 10px; display: none;"
+						id="p3" @click="showBigImg('#outerdiv', '#innerdiv', '#bigimg','p3')"/>
+
+				</div>
+				<div>
+					<img
+						style="width: 25%; height: 150px; margin: 10px; display: none;"
+						id="p4" @click="showBigImg('#outerdiv', '#innerdiv', '#bigimg','p4')"/> <img
+						style="width: 25%; height: 150px; margin: 10px; display: none;"
+						id="p5" @click="showBigImg('#outerdiv', '#innerdiv', '#bigimg','p5')"/> <img
+						style="width: 25%; height: 150px; margin: 10px; display: none;"
+						id="p6" @click="showBigImg('#outerdiv', '#innerdiv', '#bigimg','p6')"/>
+
+				</div>
+			</div>
+		</div>
+
+		<div id="outerdiv"
+			style="position: fixed; top: 0; left: 0; background: rgba(0, 0, 0, 0.7); z-index: 2; width: 100%; height: 100%; display: none;">
+			<div id="innerdiv" style="position: absolute;">
+				<img id="bigimg" style="border: 5px solid #fff;" src="" />
+			</div>
+		</div>
+
+	</div>
+</body>
+<script>
+	$(function() {
+		var app = new Vue({
+			el : '#app',
+			filters : {
+				date : function(value) {
+					var date = new Date(value * 1000);//时间戳为10位需*1000
+					var Y = date.getFullYear() + '-';
+					var M = (date.getMonth() + 1 < 10 ? '0'
+							+ (date.getMonth() + 1) : date.getMonth() + 1)
+							+ '-';
+					var D = date.getDate() + ' ';
+					var h = date.getHours() + ':';
+					var m = date.getMinutes() + ':';
+					var s = date.getSeconds();
+					return Y + M + D + h + m + s;
+
+				},
+				imgNum : function(value) {
+					if(value==null ||value=="")
+						return 0;
+					var imgArray = value.split(",");
+					return imgArray.length;
+					
+
+				},
+
+				time : function(m) {
+					var secondTime = parseInt(m);// 秒
+					var minuteTime = 0;// 分
+					var hourTime = 0;// 小时
+					if (secondTime > 60) {//如果秒数大于60，将秒数转换成整数
+						//获取分钟，除以60取整数，得到整数分钟
+						minuteTime = parseInt(secondTime / 60);
+						//获取秒数，秒数取佘，得到整数秒数
+						secondTime = parseInt(secondTime % 60);
+						//如果分钟大于60，将分钟转换成小时
+						if (minuteTime > 60) {
+							//获取小时，获取分钟除以60，得到整数小时
+							hourTime = parseInt(minuteTime / 60);
+							//获取小时后取佘的分，获取分钟除以60取佘的分
+							minuteTime = parseInt(minuteTime % 60);
+						}
+					}
+					var result = "" + parseInt(secondTime) + "秒";
+
+					if (minuteTime > 0) {
+						result = "" + parseInt(minuteTime) + "分" + result;
+					}
+					if (hourTime > 0) {
+						result = "" + parseInt(hourTime) + "小时" + result;
+					}
+					return result;
+
+				},
+			content:function(comment){
+				if(comment.length>35){
+					return comment.substring(0,35)+"...";
+				}
+				return comment;
+				
+			}
+			},
+			watch : {
+
+			},
+			data : {
+				search : {
+					expressCompany : "",
+					logisticsNo : "",
+					organization : ""
+				},
+				page : 1, //显示的是哪一页
+				pageSize : 10, //每一页显示的数据条数
+				total : 0, //记录总数
+				maxPage : 1, //最大页数
+				index : {},
+				reportDetailList : [],
+				isInitNav:false
+			},
+			methods : {
+				showBigImg:function(outerdiv, innerdiv, bigimg,id){
+					
+					 var src = $("#"+id).attr("src");//获取当前点击的pimg元素中的src属性  
+				        $(bigimg).attr("src", src);//设置#bigimg元素的src属性  
+				      
+				            /*获取当前点击图片的真实大小，并显示弹出层及大图*/  
+				        $("<img/>").attr("src", src).load(function(){  
+				            var windowW = $(window).width();//获取当前窗口宽度  
+				            var windowH = $(window).height();//获取当前窗口高度  
+				            var realWidth = this.width;//获取图片真实宽度  
+				            var realHeight = this.height;//获取图片真实高度  
+				            var imgWidth, imgHeight;  
+				            var scale = 0.8;//缩放尺寸，当图片真实宽度和高度大于窗口宽度和高度时进行缩放  
+				              
+				            if(realHeight>windowH*scale) {//判断图片高度  
+				                imgHeight = windowH*scale;//如大于窗口高度，图片高度进行缩放  
+				                imgWidth = imgHeight/realHeight*realWidth;//等比例缩放宽度  
+				                if(imgWidth>windowW*scale) {//如宽度扔大于窗口宽度  
+				                    imgWidth = windowW*scale;//再对宽度进行缩放  
+				                }  
+				            } else if(realWidth>windowW*scale) {//如图片高度合适，判断图片宽度  
+				                imgWidth = windowW*scale;//如大于窗口宽度，图片宽度进行缩放  
+				                            imgHeight = imgWidth/realWidth*realHeight;//等比例缩放高度  
+				            } else {//如果图片真实高度和宽度都符合要求，高宽不变  
+				                imgWidth = realWidth;  
+				                imgHeight = realHeight;  
+				            }  
+				                    $(bigimg).css("width",imgWidth);//以最终的宽度对图片缩放  
+				              
+				            var w = (windowW-imgWidth)/2;//计算图片与窗口左边距  
+				            var h = (windowH-imgHeight)/2;//计算图片与窗口上边距  
+				            $(innerdiv).css({"top":h, "left":w});//设置#innerdiv的top和left属性  
+				            $(outerdiv).fadeIn("fast");//淡入显示#outerdiv及.pimg  
+				        });  
+				          
+				        $(outerdiv).click(function(){//再次点击淡出消失弹出层  
+				            $(this).fadeOut("fast");  
+				        });  
+					
+					
+				},
+				queryImgs : function(index) {
+					var imgs = this.reportDetailList[index].imgs;
+					if (imgs && imgs.length > 0) {
+						var imgArray = imgs.split(",");
+						for (var i = 0; i < imgArray.length; i++) {
+							var j = i + 1;
+							var id = "p" + j
+							$('#' + id).attr('src', imgArray[i]);
+							$('#' + id).show();
+						}
+					}
+					showDialog('imgshow', 'mask');
+
+				},
+				hideDiv : function(id) {
+					for (var i = 0; i < 6; i++) {
+						var j = i + 1;
+						var imgId = "p" + j
+						$('#' + imgId).attr('src', "");
+						$('#' + imgId).hide();
+					}
+					g(id).style.display = 'none';
+					g('mask').style.display = 'none';
+				},
+				pageHandler : function(page) {
+					this.page = page;
+					var formData = {
+						"currentPage" : page,
+						"pageSize" : this.pageSize,
+						"logisticsNo" : getQueryString("logisticsNo")
+					}
+					jsonPost4Json("/report/getReportDetailList", formData,
+							function(data, httpOptions, status) {
+								if (checkErrorDatas(data, httpOptions)) {
+									if (data.reportList) {
+										app.reportDetailList = data.reportList;
+										app.total = data.totalNum;
+										app.maxPage = Math.ceil(app.total
+												/ app.pageSize);
+										if(!app.isInitNav){
+											app.isInitNav=true;
+											if(app.total>0){
+											$('.M-box').pagination({
+										   		 totalData: app.total,
+										   		 showData:app.pageSize,
+												 count:2,
+												 coping:true,
+												 keepShowPN:true,
+										 	     callback: function (api) {
+														app.pageHandler(api.getCurrent());
+										    	 }
+											});
+										}else{
+											$('.M-box').pagination({
+												 pageCount:0,
+										   		 isHide:true,
+												 count:2,
+												 coping:true,
+												 keepShowPN:true,
+										 	     callback: function (api) {
+														app.pageHandler(api.getCurrent());
+										    	 }
+											});
+										}
+										}
+									}
+								}
+							});
+				}
+			},
+			created : function() {
+				this.pageHandler(1);
+			}
+		});
+
+	});
+
+	function getQueryString(name) {
+		var reg = new RegExp("(^|&)" + name + "=([^&]*)(&|$)", "i");
+		var r = window.location.search.substr(1).match(reg);
+		if (r != null)
+			return unescape(r[2]);
+		return null;
+	}
+</script>
+</html>

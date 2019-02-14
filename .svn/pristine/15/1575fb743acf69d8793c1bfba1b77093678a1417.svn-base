@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.htkfood.mapper.master.ReportMapper">
+	<sql id="Base_Column_List">
+		l.logisticsNo,
+		l.expressCompany, IFNULL(ROUND(AVG((l.leaveTime
+		-l.arriveTime))),0) AS inFactoryTime,
+		IFNULL(ROUND(AVG((l.deliveryTime-l.dispatchTime))),0) AS transportTime
+		,
+		IFNULL(FORMAT(AVG(c.serveScore+c.timelinessScore+c.wholenessScore),2),0)
+		AS commentScore
+	</sql>
+	<select id="getReport" parameterType="com.htkfood.mapper.Criteria"
+		resultType="com.htkfood.entity.ReportEntity">
+		SELECT
+		<include refid="Base_Column_List" />
+		FROM `htk_logistics` l
+		LEFT JOIN htk_express e ON l.id=e.logisticsId
+		LEFT JOIN htk_comment c ON e.id=c.expressId
+		WHERE l.logisticsStatus>=5  and l.isDelete=0
+		<if test="condition.userId!=null">
+			and l.userId=#{condition.userId}
+		</if>
+		<if test="condition.expressCompany != null">
+			and l.expressCompany like #{condition.expressCompany}
+		</if>
+		<if test="condition.organization != null">
+			and l.organization = #{condition.organization}
+		</if>
+		GROUP BY l.expressCompany
+	</select>
+	<select id="getReportDetail" parameterType="com.htkfood.mapper.Criteria"
+		resultType="com.htkfood.entity.ReportDetailEntity">
+			SELECT
+		l.id as logisticsId , l.logisticsNo,
+		l.expressCompany,l.driverName,l.driverPhone,l.dispatchTime,l.arriveTime,e.deliveryOrder,
+		l.shipmentTime,l.leaveTime,e.updateTime as deliveryTime,l.leaveTime-l.arriveTime as
+		inFactoryTime,
+		e.updateTime-l.dispatchTime as transportTime,e.id as expressId,e.client,e.receiver,e.receiverPhone,
+		IFNULL(c.id ,0)as
+		commentId,IFNULL(c.`comment`,"暂未评价") AS 'comment',IFNULL(c.wholenessScore,-1) as wholenessScore,IFNULL(c.timelinessScore,-1) as timelinessScore,IFNULL(c.serveScore,-1) as serveScore,
+		c.imgs
+		FROM `htk_logistics` l
+		LEFT JOIN htk_express e ON l.id=e.logisticsId
+		LEFT JOIN htk_comment c ON e.id=c.expressId
+		WHERE l.logisticsStatus>=5 and l.isDelete=0
+		<if test="condition.userId!=null">
+			and l.userId=#{condition.userId}
+		</if>
+		<if test="condition.expressCompany != null">
+			and l.expressCompany=#{condition.expressCompany}
+		</if>
+		<if test="condition.organization != null">
+			and l.organization = #{condition.organization}
+		</if>
+	</select>
+
+</mapper>

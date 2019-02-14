@@ -1,0 +1,22 @@
+package com.htkfood.mapper.master;
+
+import java.util.List;
+
+import com.htkfood.entity.ReportDetailEntity;
+import com.htkfood.entity.ReportEntity;
+import com.htkfood.mapper.Criteria;
+
+/**
+ * 获取报表
+ * @author Administrator
+ */
+public interface ReportMapper {
+	
+	List<ReportEntity>  getReport(Criteria criteria);
+	
+	List<ReportDetailEntity>  getReportDetail(Criteria criteria);
+
+	
+
+
+}

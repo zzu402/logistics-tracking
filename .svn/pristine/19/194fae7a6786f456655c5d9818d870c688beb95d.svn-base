@@ -1,0 +1,115 @@
+package com.htkfood.controller;
+import org.apache.poi.hssf.usermodel.HSSFWorkbook;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.*;
+import com.htkfood.entity.UserEntity;
+import com.htkfood.entity.vo.SearchVo;
+import com.htkfood.exception.CommonException;
+import com.htkfood.interceptor.PrivilegeConstant;
+import com.htkfood.interceptor.annotation.Privileges;
+import com.htkfood.service.CommonService;
+import com.htkfood.util.ResultHelper;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
+import java.io.IOException;
+import java.io.OutputStream;
+import java.util.Map;
+@RestController
+@RequestMapping(value = "/common")
+public class CommonController {
+	@Autowired
+	private CommonService commonService;
+	@Privileges(PrivilegeConstant.OPEN_PAGE)
+	@RequestMapping(value ="/getCompanies", method = RequestMethod.POST)
+    public Map<String,Object> getCompanies(@RequestBody SearchVo model,HttpServletRequest request) throws CommonException  {
+		UserEntity user=(UserEntity) request.getSession().getAttribute("user");
+		Map<String, Object>result=ResultHelper.success();
+		commonService.getCompanyByUser(user, model,result);
+        return result;
+    }
+	@Privileges(PrivilegeConstant.OPEN_PAGE)
+	@RequestMapping(value ="/getExpressDetailUrl4App", method = RequestMethod.GET)
+    public Map<String,Object> getExpressDetailUrl4App(@RequestParam String deliveryOrder,HttpServletRequest request) throws CommonException  {
+		Map<String, Object>result=ResultHelper.success();
+		commonService.getExpressDetail4App(deliveryOrder,result,request);
+        return result;
+    }
+	
+	
+	
+	
+	@Privileges(PrivilegeConstant.OPEN_PAGE)
+	@RequestMapping(value ="/getOrders", method = RequestMethod.POST)
+    public Map<String,Object> getOrders(@RequestBody SearchVo model,HttpServletRequest request) throws CommonException  {
+		UserEntity user=(UserEntity) request.getSession().getAttribute("user");
+		Map<String, Object>result=ResultHelper.success();
+		commonService.getDeliveryOrder(user, model,result);
+        return result;
+    }
+	@Privileges(PrivilegeConstant.LOGIN_PAGE)
+	@RequestMapping(value ="/getEmployee", method = RequestMethod.POST)
+    public Map<String,Object> getEmployee(@RequestBody SearchVo model) throws CommonException  {
+		Map<String, Object>result=ResultHelper.success();
+		commonService.getEmployee( model,result);
+        return result;
+    }
+	
+	@Privileges(PrivilegeConstant.LOGIN_PAGE)
+	@RequestMapping(value ="/exportReport", method = RequestMethod.GET)
+    public void exportReport(@RequestParam(required=false)String expressCompany,HttpServletRequest request,HttpServletResponse response) throws CommonException, IOException  {
+		UserEntity user=(UserEntity) request.getSession().getAttribute("user");
+		String org=(String) request.getSession().getAttribute("queryOrg");
+		SearchVo model=new SearchVo();
+		model.setOrganization(org);
+		model.setExpressCompany(expressCompany);
+		HSSFWorkbook wb =commonService.exportReport(user, model);
+		response.setContentType("application/vnd.ms-excel");  
+        response.setHeader("Content-disposition", "attachment;filename=report.xls");  
+        OutputStream ouputStream = response.getOutputStream();  
+        wb.write(ouputStream);  
+        ouputStream.flush();  
+        ouputStream.close(); 
+    }
+	
+	@Privileges(PrivilegeConstant.LOGIN_PAGE)
+	@RequestMapping(value ="/exportLogistics", method = RequestMethod.GET)
+    public void exportLogistics(@RequestParam(required=false)String logisticsNo,@RequestParam(required=false)String expressCompany,
+    		@RequestParam(required=false)String deliveryOrder,@RequestParam(required=false)Integer logisticsStatus,
+    		@RequestParam(required=false)String client,
+    		@RequestParam(required=false)String address,
+    		@RequestParam(required=false)Integer timeType,
+    		@RequestParam(required=false)Long beginTime,
+    		@RequestParam(required=false)Long endTime,
+    		HttpServletRequest request,HttpServletResponse response) throws CommonException, IOException  {
+		UserEntity user=(UserEntity) request.getSession().getAttribute("user");
+		String org=(String) request.getSession().getAttribute("queryOrg");
+		SearchVo model=new SearchVo();
+		model.setOrganization(org);
+		model.setLogisticsNo(logisticsNo);
+		model.setLogisticsStatus(logisticsStatus);
+		model.setDeliveryOrder(deliveryOrder);
+		model.setExpressCompany(expressCompany);
+		model.setAddress(address);
+		model.setClient(client);
+		model.setBeginTime(beginTime);
+		model.setEndTime(endTime);
+		model.setTimeType(timeType);
+		HSSFWorkbook wb =commonService.exportLogistics(user, model);
+		response.setContentType("application/vnd.ms-excel");  
+        response.setHeader("Content-disposition", "attachment;filename=logistics.xls");  
+        OutputStream ouputStream = response.getOutputStream();  
+        wb.write(ouputStream);  
+        ouputStream.flush();  
+        ouputStream.close();  
+    }
+	
+	@Privileges(PrivilegeConstant.DISPATCH_PAGE)
+	@RequestMapping(value = "/getNotification", method = RequestMethod.POST)
+	public Map<String, Object> getNotification(HttpServletRequest request) throws CommonException {
+		Map<String,Object>result=ResultHelper.success();
+		UserEntity user=(UserEntity) request.getSession().getAttribute("user");
+		commonService.getNotificationByUser(user, result);
+		return result;
+	}
+}

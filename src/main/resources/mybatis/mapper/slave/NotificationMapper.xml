@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.htkfood.mapper.slave.NotificationMapper" >
+    <sql id="Base_Column_List" >
+        id,status,notification,createTime,updateTime,receiver,userId
+    </sql>
+    <select id="getNotification" 
+    parameterType="com.htkfood.mapper.Criteria" 
+    resultType="com.htkfood.entity.NotificationEntity"  >
+       SELECT 
+       <include refid="Base_Column_List" />
+       FROM htk_notification
+       WHERE 1=1
+       <if test="condition.id != null">
+				and id = #{condition.id}
+	   </if>
+	   <if test="condition.status != null">
+				and status = #{condition.status}
+	   </if>
+	    <if test="condition.receiver != null">
+				and receiver = #{condition.receiver}
+	   </if>
+	    <if test="condition.userId != null">
+				and userId = #{condition.userId}
+	   </if>
+    </select>
+    
+    
+   <insert  id="insertByEntity" parameterType="com.htkfood.entity.NotificationEntity">
+     <selectKey keyProperty="id"  order="BEFORE" resultType="Long">
+             select max(id)+1 as newId from htk_notification
+    	</selectKey>
+   insert into htk_notification
+		<trim prefix="(" suffix=")" suffixOverrides=",">
+			<if test="id!=null">
+				id,
+			</if>
+			<if test="notification != null">
+				notification,
+			</if>
+			<if test="status != null">
+				status,
+			</if>
+			<if test="createTime != null">
+				createTime,
+			</if>
+			<if test="updateTime != null">
+				updateTime,
+			</if>
+			<if test="receiver != null">
+				receiver,
+			</if>
+			<if test="userId != null">
+				userId,
+			</if>
+		</trim>
+		<trim prefix=" values ( " suffix=")" suffixOverrides=",">
+			<if test="id !=null">
+				#{id},
+			</if>
+			<if test="notification != null">
+				#{notification},
+			</if>
+			<if test="status != null">
+				#{status},
+			</if>
+			<if test="createTime != null">
+				#{createTime},
+			</if>
+			<if test="updateTime != null">
+				#{updateTime},
+			</if>
+			<if test="receiver != null">
+				#{receiver},
+			</if>
+			<if test="userId != null">
+				#{userId},
+			</if>
+		</trim>
+   </insert>
+   
+   <update id="updateByEntity" parameterType="com.htkfood.entity.NotificationEntity">
+  	update htk_notification
+  		<set>
+			<if test="notification != null">
+				notification = #{notification},
+			</if>
+			<if test="status != null">
+				status = #{status},
+			</if>
+			<if test="updateTime != null">
+				updateTime = #{updateTime},
+			</if>
+		</set>
+	where id = #{id}
+  </update>
+  
+  <delete id="deleteById" parameterType="Long">
+  	delete from htk_notification
+  	where id = #{id}
+  </delete>
+   
+</mapper>

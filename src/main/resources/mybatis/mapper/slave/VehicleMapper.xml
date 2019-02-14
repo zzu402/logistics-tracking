@@ -1,0 +1,231 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.htkfood.mapper.slave.VehicleMapper" >
+    <sql id="Base_Column_List" >
+        id, plate,vehicleType,
+        owner,engineNo,vin,vehicleCardPhoto,
+        createTime,status,updateTime
+    </sql>
+    <select id="getVehicle" 
+    parameterType="com.htkfood.mapper.Criteria" 
+    resultType="com.htkfood.entity.Vehicle"  >
+       SELECT 
+       <include refid="Base_Column_List" />
+       FROM htk_logistics_vehicle
+       WHERE 1=1
+       <if test="condition.id != null">
+				and id = #{condition.id}
+	   </if>
+	   <if test="condition.plate != null">
+				and plate like  #{condition.plate}
+	   </if>
+	   <if test="condition.vehicleType != null">
+				and vehicleType like #{condition.vehicleType}
+	   </if>
+	    <if test="condition.status != null">
+				and status = #{condition.status}
+	   </if>
+	   <if test="condition.owner != null">
+				and owner = #{condition.owner}
+	   </if>
+	   <if test="condition.engineNo != null">
+				and engineNo = #{condition.engineNo}
+	   </if>
+	    <if test="condition.organization != null">
+				and organization = #{condition.organization}
+	   </if>
+    </select>
+    
+    
+   <insert  id="insertByEntity" parameterType="com.htkfood.entity.Vehicle" >
+     <selectKey keyProperty="id"  order="BEFORE" resultType="Long">
+             select case when max(id) is  not   null  then max(id)+1 else  1 end as newId from htk_logistics_vehicle
+    	</selectKey>
+   insert into htk_logistics_vehicle
+		<trim prefix="(" suffix=")" suffixOverrides=",">
+			<if test="id!=null">
+				id,
+			</if>
+			<if test="plate != null">
+				plate,
+			</if>
+			<if test="vehicleType != null">
+				vehicleType,
+			</if>
+			<if test="owner != null">
+				owner,
+			</if>
+			<if test="engineNo != null">
+				engineNo,
+			</if>
+			<if test="vin != null">
+				vin,
+			</if>
+			<if test="status != null">
+				status,
+			</if>
+			<if test="createTime != null">
+				createTime,
+			</if>
+			<if test="vehicleCardPhoto != null">
+				vehicleCardPhoto,
+			</if>
+			<if test="updateTime != null">
+				updateTime,
+			</if>
+			<if test="organization != null">
+				organization,
+			</if>
+		</trim>
+		<trim prefix=" values ( " suffix=")" suffixOverrides=",">
+			<if test="id !=null">
+				#{id},
+			</if>
+			<if test="plate != null">
+				#{plate},
+			</if>
+			<if test="vehicleType != null">
+				#{vehicleType},
+			</if>
+			<if test="owner != null">
+				#{owner},
+			</if>
+			<if test="engineNo != null">
+				#{engineNo},
+			</if>
+			<if test="vin != null">
+				#{vin},
+			</if>
+			<if test="status != null">
+				#{status},
+			</if>
+			<if test="createTime != null">
+				#{createTime},
+			</if>
+			<if test="vehicleCardPhoto != null">
+				#{vehicleCardPhoto},
+			</if>
+			<if test="updateTime != null">
+				#{updateTime},
+			</if>
+			<if test="organization != null">
+				#{organization},
+			</if>
+		</trim>
+   </insert>
+   
+   
+   <insert  id="insertAndReturnVehicle" parameterType="com.htkfood.entity.Vehicle"  keyProperty="id">
+    	 <selectKey keyProperty="id"  order="BEFORE" resultType="Long">
+             select case when max(id) is  not   null  then max(id)+1 else  1 end as newId from htk_logistics_vehicle
+    	</selectKey>
+   insert into htk_logistics_vehicle
+		<trim prefix="(" suffix=")" suffixOverrides=",">
+			<if test="id!=null">
+				id,
+			</if>
+			<if test="plate != null">
+				plate,
+			</if>
+			<if test="vehicleType != null">
+				vehicleType,
+			</if>
+			<if test="owner != null">
+				owner,
+			</if>
+			<if test="engineNo != null">
+				engineNo,
+			</if>
+			<if test="vin != null">
+				vin,
+			</if>
+			<if test="status != null">
+				status,
+			</if>
+			<if test="createTime != null">
+				createTime,
+			</if>
+			<if test="vehicleCardPhoto != null">
+				vehicleCardPhoto,
+			</if>
+			<if test="updateTime != null">
+				updateTime,
+			</if>
+			<if test="organization != null">
+				organization,
+			</if>
+		</trim>
+		<trim prefix=" values ( " suffix=")" suffixOverrides=",">
+			<if test="id !=null">
+				#{id},
+			</if>
+			<if test="plate != null">
+				#{plate},
+			</if>
+			<if test="vehicleType != null">
+				#{vehicleType},
+			</if>
+			<if test="owner != null">
+				#{owner},
+			</if>
+			<if test="engineNo != null">
+				#{engineNo},
+			</if>
+			<if test="vin != null">
+				#{vin},
+			</if>
+			<if test="status != null">
+				#{status},
+			</if>
+			<if test="createTime != null">
+				#{createTime},
+			</if>
+			<if test="vehicleCardPhoto != null">
+				#{vehicleCardPhoto},
+			</if>
+			<if test="updateTime != null">
+				#{updateTime},
+			</if>
+			<if test="organization != null">
+				#{organization},
+			</if>
+		</trim>
+   </insert>
+   
+   <update id="updateByEntity" parameterType="com.htkfood.entity.Vehicle">
+  	update htk_logistics_vehicle
+  		<set>
+			<if test="plate != null">
+				plate = #{plate},
+			</if>
+			<if test="vehicleType != null">
+				vehicleType = #{vehicleType},
+			</if>
+			<if test="owner != null">
+				owner = #{owner},
+			</if>
+			<if test="engineNo != null">
+				engineNo = #{engineNo},
+			</if>
+			<if test="vin != null">
+				vin = #{vin},
+			</if>
+			<if test="status != null">
+				status = #{status},
+			</if>
+			<if test="vehicleCardPhoto != null">
+				vehicleCardPhoto = #{vehicleCardPhoto},
+			</if>
+			<if test="updateTime != null">
+				updateTime = #{updateTime},
+			</if>
+		</set>
+	where id = #{id}
+  </update>
+  
+  <delete id="deleteById" parameterType="Long">
+  	delete from htk_logistics_vehicle
+  	where id = #{id}
+  </delete>
+   
+</mapper>

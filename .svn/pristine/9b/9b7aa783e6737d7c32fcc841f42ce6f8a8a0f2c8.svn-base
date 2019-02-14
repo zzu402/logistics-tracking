@@ -1,0 +1,435 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>回头客物流跟踪系统</title>
+<link rel="stylesheet" href="../assets/css/bootstrap.css" />
+<link rel="stylesheet" href="../assets/css/css.css" />
+<link rel="stylesheet" href="../assets/css/dialog.css" />
+<link rel="stylesheet" href="../assets/css/pagination.css" />
+<script src="../assets/js/jquery-1.10.2.js"></script>
+<script src="../assets/js/bootstrap.min.js"></script>
+<script src="../assets/js/httpUtil.js"></script>
+<script src="../assets/js/common.js"></script>
+<script src="../assets/js/vue.js"></script>
+<script src="../assets/js/dialog.js"></script>
+<script src="../assets/js/jquery.pagination.js"></script>
+</head>
+<body>
+	<div class="title_right">
+		<strong>货物装载</strong>
+	</div>
+	<div id="app">
+		<div style="width: 80%; margin: auto;">
+			<span>物流单号:{{logistics.logisticsNo}}</span> <span
+				style="margin-left: 10px">承运公司:{{logistics.expressCompany}}</span> <span
+				style="margin-left: 10px">司机姓名:{{logistics.driverName}}</span> <span
+				style="margin-left: 10px">司机电话:{{logistics.driverPhone}}</span> <img
+				align="right" style="margin-bottom: 10px"
+				src="../assets/img/add.png" @click="addRow()"> <img
+				align="right" style="margin-bottom: 10px; margin-left: 10px; margin-right: 20px" 
+				src="../assets/img/delete.png" @click="deleteRow()" />
+				<table class="table table-bordered" id="mtable">
+					<tr>
+						<td align="center" nowrap="nowrap" bgcolor="#f1f1f1">选框</td>
+						<td align="center" nowrap="nowrap" bgcolor="#f1f1f1">出库单号</td>
+						<td align="center" nowrap="nowrap" bgcolor="#f1f1f1">客户名称</td>
+						<td align="center" nowrap="nowrap" bgcolor="#f1f1f1">收货人</td>
+						<td align="center" nowrap="nowrap" bgcolor="#f1f1f1">收货电话</td>
+						<td align="center" nowrap="nowrap" bgcolor="#f1f1f1">收货地址</td>
+						<td align="center" nowrap="nowrap" bgcolor="#f1f1f1">业务员</td>
+						<td align="center" nowrap="nowrap" bgcolor="#f1f1f1">业务员电话</td>
+					</tr>
+					<tr v-for="(row,index) in rows">
+						<td width="3%" align="center"><input type="checkbox"
+							name="check" :id="index" /></td>
+						<td width="12%"><input style="width: 90%" type="text"
+							class="span1-1" v-model="rows[index].deliveryOrder"
+							@click="show('orderpp',index)" /></td>
+						<td width="15%"><input style="width: 94%" type="text"
+							class="span1-1" v-model="rows[index].client" /></td>
+						<td width="8%"><input style="width: 90%" type="text"
+							class="span1-1" v-model="rows[index].receiver" /></td>
+						<td width="10%"><input style="width: 90%" type="text"
+							class="span1-1" v-model="rows[index].receiverPhone" /></td>
+						<td width="35%"><input style="width: 98%" type="text"
+							class="span1-1" v-model="rows[index].receiveAddress" /></td>
+						<td width="8%"><input style="width: 90%" type="text"
+							class="span1-1" v-model="rows[index].employeeName" 
+							@click="show('employeepp',index)"/></td>
+						<td width="10%"><input style="width: 90%" type="text"
+							class="span1-1" v-model="rows[index].employeePhone" /></td>
+					</tr>
+				</table>
+				<div class="its" id="orderpp" @mouseleave="hide('orderpp')">
+					<li class="li_item" v-for="(order,index) in orders"
+						@click="selectOrder(index)">出库单号:{{order.deliveryOrder}}
+						客户名称: {{order.client}} 收货人: {{order.receiver}}
+						电话:{{order.receiverPhone}} 地址:{{order.receiveAddress}}
+						业务员:{{order.fname}} 业务员电话:{{order.fphone}}
+						</li>
+					<div align="center">
+						<!-- <dialogpagenav v-bind:page="page" v-bind:page-size="pageSize"
+							v-bind:total="total" v-bind:max-page="maxPage"
+							v-on:pagehandler="pageHandler"> <zpagenav> -->
+							<div class="m-style1 M-box1"></div>
+					</div>
+				</div>
+					<div class="its" id="employeepp" @mouseleave="hide('employeepp')">
+					<li class="li_item" v-for="(employee,index) in employees" @click="selectEmployee(index)">
+						业务员:{{employee.employeeName}} 业务员电话:{{employee.employeePhone}}
+						</li>
+					<div align="center">
+						<div class="m-style1 M-box2"></div>
+					</div>
+				</div>
+				
+				
+				<table class="margin-bottom-20  table no-border">
+					<tr>
+						<td class="text-center"><input type="button" value="确定"
+							@click="submit()" class="btn btn-info  " style="width: 80px;" /></td>
+					</tr>
+				</table>
+		</div>
+	</div>
+</body>
+<script>
+	$(function() {
+		var phoneReg = /^1[3|4|5|7|8][0-9]\d{8,11}$/;
+		var app = new Vue({
+			el : '#app',
+			watch : {
+				rows : {
+					handler : function(newVal) {
+						this.queryKeyWord(newVal);
+						this.queryKeywordEmployee(newVal);
+					},
+					deep : true
+				//深度监听
+				}
+			},
+			filters : {
+				orderStatus : function(status) {
+					if (status == 0) {
+						return "未发货";
+					} else if (status == 1) {
+						return "已发货";
+					}
+				}
+			},
+			data : {
+				isClick:false,
+				isShow : false,
+				employeeShow:false,
+				isNav1:false,
+				isNav2:false,
+				clickIndex : -1,
+				page : 1, //显示的是哪一页
+				pageSize : 12, //每一页显示的数据条数
+				total : 0, //记录总数
+				maxPage : 31, //最大页数
+				logisticsNo : "",
+				expressList : [],
+				logistics : {},
+				orders : [],
+				orgNo : "",
+				t : "",
+				employees:[],
+				rows : [ {
+					deliveryOrder : "",
+					client : "",
+					receiver : "",
+					receiverPhone : "",
+					receiveAddress : "",
+					employeeName : "",
+					employeePhone : ""
+				} ],
+				keyword : ""
+			},
+			methods : {
+				queryKeyWord : function(newRows) {
+					if (!this.isShow)
+						return;
+					app.isNav1=false;
+					this.keyword = newRows[this.clickIndex].deliveryOrder;
+					this.pageHandler(1);
+				},
+				queryKeywordEmployee: function(newRows) {
+					if (!this.employeeShow)
+						return;
+					app.isNav2=false;
+					this.keyword = newRows[this.clickIndex].employeeName;
+					this.mpageHandler(1);
+				},
+				addRow : function() {
+					var newRow = {
+						deliveryOrder : "",
+						client : "",
+						receiver : "",
+						receiverPhone : "",
+						receiveAddress : "",
+						employeeName : "",
+						employeePhone : ""
+
+					};
+					this.rows.push(newRow);
+				},
+				deleteRow : function() {
+					var cheboxs = $('#mtable').find('input:checked');
+					if (cheboxs.length != 1) {
+						alert("请选择一条数据！");
+						return;
+					}
+					var index = cheboxs[0].id;
+					if (this.rows.length > 1) {
+						this.rows.splice(index,1);
+					}
+					
+				},
+				selectOrder : function(index) {
+					this.$set(this.rows[this.clickIndex], "deliveryOrder",
+							this.orders[index].deliveryOrder);
+					this.$set(this.rows[this.clickIndex], "client",
+							this.orders[index].client);
+					this.$set(this.rows[this.clickIndex], "receiver",
+							this.orders[index].receiver);
+					this.$set(this.rows[this.clickIndex], "receiverPhone",
+							this.orders[index].receiverPhone);
+					this.$set(this.rows[this.clickIndex], "receiveAddress",
+							this.orders[index].receiveAddress);
+					this.$set(this.rows[this.clickIndex], "employeeName",
+							this.orders[index].fname);
+					this.$set(this.rows[this.clickIndex], "employeePhone",
+							this.orders[index].fphone);
+					this.hide('orderpp');
+				},
+				selectEmployee : function(index) {
+					this.$set(this.rows[this.clickIndex], "employeeName",
+							this.employees[index].employeeName);
+					this.$set(this.rows[this.clickIndex], "employeePhone",
+							this.employees[index].employeePhone);
+					this.hide('employeepp');
+				},
+				pageHandler : function(page) {
+					this.page = page;
+					var formData = {
+						"currentPage" : this.page,
+						"pageSize" : this.pageSize,
+						"orgNo" : this.orgNo,
+						"keyword" : this.keyword
+					}
+					jsonPost4Json("/common/getOrders", formData, function(data,
+							httpOptions, status) {
+						if (checkErrorDatas(data, httpOptions)) {
+							if (data.orders) {
+								app.orders = data.orders;
+								app.total = data.totalNum;
+								if(!app.isNav1){
+									app.isNav1=true;
+									if(app.total>0){
+									$('.M-box1').pagination({
+								   		 totalData: app.total,
+								   		 showData:app.pageSize,
+										 count:2,
+										 coping:true,
+										 keepShowPN:true,
+								 	     callback: function (api) {
+												app.pageHandler(api.getCurrent());
+								    	 }
+									});
+								}else{
+									$('.M-box1').pagination({
+										 pageCount:0,
+								   		 isHide:true,
+										 count:2,
+										 coping:true,
+										 keepShowPN:true,
+								 	     callback: function (api) {
+												app.pageHandler(api.getCurrent());
+								    	 }
+									});
+								}
+								}
+							}
+						}
+					});
+				},
+				mpageHandler : function(page) {
+					this.page = page;
+					var formData = {
+						"currentPage" : this.page,
+						"pageSize" : this.pageSize,
+						"orgNo" : this.orgNo,
+						"keyword" : this.keyword
+					}
+					jsonPost4Json("/common/getEmployee", formData, function(data,
+							httpOptions, status) {
+						if (checkErrorDatas(data, httpOptions)) {
+							if (data.employees) {
+								app.employees = data.employees;
+								app.total = data.totalNum;
+								if(!app.isNav2){
+									app.isNav2=true;
+									if(app.total>0){
+									$('.M-box2').pagination({
+								   		 totalData: app.total,
+								   		 showData:app.pageSize,
+										 count:2,
+										 coping:true,
+										 keepShowPN:true,
+								 	     callback: function (api) {
+												app.mpageHandler(api.getCurrent());
+								    	 }
+									});
+								}else{
+									$('.M-box2').pagination({
+										 pageCount:0,
+								   		 isHide:true,
+										 count:2,
+										 coping:true,
+										 keepShowPN:true,
+								 	     callback: function (api) {
+												app.mpageHandler(api.getCurrent());
+								    	 }
+									});
+								}
+								}
+							}
+						}
+					});
+				},
+				show : function(id, index) {
+					if (id == 'orderpp') {
+						app.isNav1=false;
+						app.pageHandler(1);
+						this.isShow = true;
+					}
+					if (id == 'employeepp') {
+						app.isNav2=false;
+						app.mpageHandler(1);
+						this.employeeShow=true;
+					}
+					this.clickIndex = index;
+					
+					g(id).style.display = 'block';
+				},
+				hide : function(id) {
+					if (id == 'orderpp') {
+						app.keyword = "";
+						this.isShow = false;
+					}
+					if (id == 'employeepp') {
+						app.keyword = "";
+						this.employeeShow = false;
+					}
+					g(id).style.display = 'none';
+				},
+				submit : function() {
+					if(app.isClick)
+						return ;
+					app.isClick=true;
+					
+					/* console.log(this.rows);
+					var tab = document.getElementById("mtable"); 
+					var rows = tab.rows;
+					app.expressList.splice(0, app.expressList.length);
+					for (var i = 1; i < rows.length; i++) {
+						var row = rows[i];
+						var express = {};
+						express.deliveryOrder = row.cells[0].children[0].value;
+						express.client = row.cells[1].children[0].value;
+						express.receiver = row.cells[2].children[0].value;
+						express.receiverPhone = row.cells[3].children[0].value;
+						express.receiveAddress = row.cells[4].children[0].value;
+						app.expressList.push(express);
+					}
+					console.log(this.expressList);  */
+					for (var i = 0; i < app.rows.length; i++) {
+						var express = app.rows[i];
+						if (express.deliveryOrder == "") {
+							alert("出库单号不能为空!");
+							return;
+						}
+						if (express.client == "") {
+							alert("客户名称不能为空!");
+							return;
+						}
+						if (express.receiver == "") {
+							alert("收货人不能为空!");
+							return;
+						}
+						if (express.receiverPhone == "") {
+							alert("收货人电话不能为空!");
+							return;
+						}
+						if (express.receiveAddress == "") {
+							alert("收货地址不能为空!");
+							return;
+						}
+						if (express.employeeName == "") {
+							alert("业务员不能为空!");
+							return;
+						}
+						if (express.employeePhone == "") {
+							alert("业务员电话不能为空!");
+							return;
+						}
+
+						if (!phoneReg.test($.trim(express.receiverPhone))) {
+							alert("请输入正确的收货人手机号");
+							return;
+						}
+						if (!phoneReg.test($.trim(express.employeePhone))) {
+							alert("请输入正确的业务员手机号");
+							return;
+						}
+
+					}
+
+					var formData = {
+						"logisticsNo" : app.logisticsNo,
+						"expressEntities" : app.rows
+					}
+					jsonPost4Json("/express/postExpress", formData, function(
+							data, httpOptions, status) {
+						app.isClick=false;
+						if (checkErrorDatas(data, httpOptions)) {
+							if (data.msg) {
+								alert(data.msg);
+							}
+							var url = "clipboardPage?logisticsNo="
+									+ app.logisticsNo + "&t=" + app.t;
+							window.open(url, "_self");
+						}
+					});
+				}
+
+			}
+		});
+		//获取物流单号
+		app.logisticsNo = getQueryString("logisticsNo");
+		app.orgNo = getQueryString("orgNo");
+		app.t = getQueryString("t");
+		var formData = {
+			"logisticsNo" : app.logisticsNo,
+			"t" : app.t
+		}
+		formPost4Json("/logistics/queryLogistics", formData, function(data,
+				httpOptions, status) {
+			if (checkErrorDatas(data, httpOptions)) {
+				app.logistics = data.logistics;
+			}
+		});
+
+	});
+	function getQueryString(name) {
+		var reg = new RegExp("(^|&)" + name + "=([^&]*)(&|$)", "i");
+		var r = window.location.search.substr(1).match(reg);
+		if (r != null)
+			return unescape(r[2]);
+		return null;
+	}
+</script>
+
+</html>

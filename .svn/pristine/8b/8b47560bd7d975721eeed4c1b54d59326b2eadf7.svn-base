@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.htkfood.mapper.slave1.ProductPhotoMapper">
+
+	<resultMap id="BaseResultMap" type="com.htkfood.entity.ProductLinePhotoVo">
+		<id column="id" property="id" jdbcType="VARCHAR" />
+		<result column="user_Id" property="userId" jdbcType="VARCHAR" />
+		<result column="img1" property="img1" jdbcType="VARCHAR" />
+		<result column="img2" property="img2" jdbcType="VARCHAR" />
+		<result column="img3" property="img3" jdbcType="VARCHAR" />
+		<result column="img4" property="img4" jdbcType="VARCHAR" />
+		<result column="org" property="org" jdbcType="VARCHAR" />
+		<result column="dept" property="dept" jdbcType="VARCHAR" />
+		<result column="name" property="name" jdbcType="VARCHAR" />
+		<result column="product_line" property="productLine" jdbcType="VARCHAR" />
+		<result column="ext" property="ext" jdbcType="VARCHAR" />
+		<result column="create_time" property="createTime" jdbcType="TIMESTAMP" />
+	</resultMap>
+
+	<sql id="Example_Where_Clause2">
+		<trim prefix="where" prefixOverrides="and|or">
+			<if test="condition.id != null">
+				and a."id" = #{condition.id}
+			</if>
+			<if test="condition.userId != null">
+				and a."user_id" = #{condition.userId}
+			</if>
+			<if test="condition.createTime != null">
+				<![CDATA[and to_char(a."create_time",'yyyy-MM-dd') = #{condition.createTime}]]>
+			</if>
+			<if test="condition.productLine != null">
+				and a."product_line" = #{condition.productLine}
+			</if>
+			<if
+				test="condition.productLines != null  and condition.productLines.size()>0">
+				and a."product_line" in
+				<foreach collection="condition.productLines" item="item"
+					open="(" close=")" separator=",">
+					#{item}
+				</foreach>
+			</if>
+			<if test="condition.org != null">
+				and a."org" = #{condition.org}
+			</if>
+			<if test="condition.dept != null">
+				and a."dept" = #{condition.dept}
+			</if>
+			<if test="condition.beginDate!=null">
+		<![CDATA[and a."create_time" >= to_date(#{condition.beginDate},'yyyy-MM-dd')]]>
+			</if>
+			<if test="condition.endDate !=null">
+		<![CDATA[and a."create_time" <= to_date(#{condition.endDate},'yyyy-MM-dd')]]>
+			</if>
+			<if test="condition.keyword != null">
+				and (a."product_line" like #{condition.keyword} or b.name like  #{condition.keyword})
+			</if>
+		</trim>
+	</sql>
+	<sql id="Base_Column_List2">
+		a."id",a."user_id",a."img1",a."img2",a."img3",a."img4",a."org",a."dept",a."product_line",a."create_time",a."ext",b.name
+	</sql>
+
+	<!-- 根据条件查询记录集 -->
+	<select id="select" resultMap="BaseResultMap" parameterType="com.htkfood.mapper.Criteria">
+		select
+		<if test="distinct">
+			distinct
+		</if>
+		<include refid="Base_Column_List2" />
+		from BASE_PRODUCT_LINE_IMG a
+		Left join BASE_EMPLOYEE_DETALLS b ON
+		a."user_id"=b.user_id
+		<if test="_parameter != null">
+			<include refid="Example_Where_Clause2" />
+		</if>
+		order by a."create_time" desc
+	</select>
+
+
+
+
+</mapper>

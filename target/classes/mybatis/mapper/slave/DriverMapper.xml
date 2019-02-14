@@ -1,0 +1,216 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.htkfood.mapper.slave.DriverMapper" >
+    <sql id="Base_Column_List" >
+        id, name,phone,
+        idCard,idCardPhoto,driverPhoto,status,
+        createTime,vehicleId,updateTime,organization
+    </sql>
+    <select id="getDriver" 
+    parameterType="com.htkfood.mapper.Criteria" 
+    resultType="com.htkfood.entity.Driver"  >
+       SELECT 
+       <include refid="Base_Column_List" />
+       FROM htk_logistics_driver
+       WHERE 1=1
+       <if test="condition.id != null">
+				and id = #{condition.id}
+	   </if>
+	   <if test="condition.name != null">
+				and name like #{condition.name}
+	   </if>
+	   <if test="condition.phone != null">
+				and phone like #{condition.phone}
+	   </if>
+	    <if test="condition.status != null">
+				and status = #{condition.status}
+	   </if>
+	     <if test="condition.organization != null">
+				and organization = #{condition.organization}
+	   </if>
+    </select>
+    
+    
+     <select id="getDriverAndVehicleList" 
+    parameterType="com.htkfood.mapper.Criteria" 
+    resultType="com.htkfood.entity.DriverAndVehicle"  >
+       SELECT 
+       a.id, a.name,a.phone,
+        a.idCard,a.idCardPhoto,a.driverPhoto,a.status,
+        a.createTime,a.vehicleId,a.updateTime,a.organization,b.plate,b.vehicleType,b.owner,b.engineNo,b.vehicleCardPhoto
+       FROM htk_logistics_driver a
+       left join htk_logistics_vehicle b on a.vehicleId=b.id
+       WHERE 1=1
+       <if test="condition.id != null">
+				and a.id = #{condition.id}
+	   </if>
+	   <if test="condition.name != null">
+				and a.name like #{condition.name}
+	   </if>
+	   <if test="condition.phone != null">
+				and a.phone like #{condition.phone}
+	   </if>
+	    <if test="condition.plate != null">
+				and b.plate like #{condition.plate}
+	   </if>
+	    <if test="condition.status != null">
+				and a.status = #{condition.status}
+	   </if>
+	     <if test="condition.organization != null">
+				and a.organization = #{condition.organization}
+	   </if>
+    </select>
+    
+    
+    
+     <select id="getDriverAndVehicleByBillNo" 
+    parameterType="com.htkfood.mapper.Criteria" 
+    resultType="com.htkfood.entity.DriverAndVehicle"  >
+       SELECT 
+        a.id, a.name,a.phone,
+        a.idCard,a.idCardPhoto,a.driverPhoto,a.status,
+        a.createTime,a.vehicleId,a.updateTime,a.organization,d.plate,d.vehicleType,d.owner,d.engineNo,b.vehicleCardPhoto
+       FROM 
+			 htk_express c 
+       INNER JOIN htk_logistics d  on  c.logisticsId=d.id
+			 INNER JOIN htk_logistics_driver a on d.driverId=a.id
+       left join htk_logistics_vehicle b on a.vehicleId=b.id
+       WHERE 1=1
+       <if test="condition.id != null">
+				and a.id = #{condition.id}
+	   </if>
+	   <if test="condition.name != null">
+				and a.name like #{condition.name}
+	   </if>
+	   <if test="condition.phone != null">
+				and a.phone like #{condition.phone}
+	   </if>
+	    <if test="condition.plate != null">
+				and b.plate like #{condition.plate}
+	   </if>
+	    <if test="condition.status != null">
+				and a.status = #{condition.status}
+	   </if>
+	     <if test="condition.organization != null">
+				and a.organization = #{condition.organization}
+	   </if>
+	   <if test="condition.billNo != null">
+				and c.deliveryOrder = #{condition.billNo}
+	   </if>
+    </select>
+    
+    
+   <insert  id="insertByEntity" parameterType="com.htkfood.entity.Driver">
+     <selectKey keyProperty="id"  order="BEFORE" resultType="Long">
+             select case when max(id) is  not   null  then max(id)+1 else  1 end as newId from htk_logistics_driver
+    	</selectKey>
+   insert into htk_logistics_driver
+		<trim prefix="(" suffix=")" suffixOverrides=",">
+			<if test="id!=null">
+				id,
+			</if>
+			<if test="name != null">
+				name,
+			</if>
+			<if test="phone != null">
+				phone,
+			</if>
+			<if test="idCard != null">
+				idCard,
+			</if>
+			<if test="idCardPhoto != null">
+				idCardPhoto,
+			</if>
+			<if test="driverPhoto != null">
+				driverPhoto,
+			</if>
+			<if test="status != null">
+				status,
+			</if>
+			<if test="createTime != null">
+				createTime,
+			</if>
+			<if test="vehicleId != null">
+				vehicleId,
+			</if>
+			<if test="updateTime != null">
+				updateTime,
+			</if>
+			<if test="organization != null">
+				organization,
+			</if>
+		</trim>
+		<trim prefix=" values ( " suffix=")" suffixOverrides=",">
+			<if test="id !=null">
+				#{id},
+			</if>
+			<if test="name != null">
+				#{name},
+			</if>
+			<if test="phone != null">
+				#{phone},
+			</if>
+			<if test="idCard != null">
+				#{idCard},
+			</if>
+			<if test="idCardPhoto != null">
+				#{idCardPhoto},
+			</if>
+			<if test="driverPhoto != null">
+				#{driverPhoto},
+			</if>
+			<if test="status != null">
+				#{status},
+			</if>
+			<if test="createTime != null">
+				#{createTime},
+			</if>
+			<if test="vehicleId != null">
+				#{vehicleId},
+			</if>
+			<if test="updateTime != null">
+				#{updateTime},
+			</if>
+			<if test="organization != null">
+				#{organization},
+			</if>
+		</trim>
+   </insert>
+   
+   <update id="updateByEntity" parameterType="com.htkfood.entity.Driver">
+  	update htk_logistics_driver
+  		<set>
+			<if test="name != null">
+				name = #{name},
+			</if>
+			<if test="phone != null">
+				phone = #{phone},
+			</if>
+			<if test="idCard != null">
+				idCard = #{idCard},
+			</if>
+			<if test="idCardPhoto != null">
+				idCardPhoto = #{idCardPhoto},
+			</if>
+			<if test="driverPhoto != null">
+				driverPhoto = #{driverPhoto},
+			</if>
+			<if test="status != null">
+				status = #{status},
+			</if>
+			<if test="vehicleId != null">
+				vehicleId = #{vehicleId},
+			</if>
+			<if test="updateTime != null">
+				updateTime = #{updateTime},
+			</if>
+		</set>
+	where id = #{id}
+  </update>
+  
+  <delete id="deleteById" parameterType="Long">
+  	delete from htk_logistics_driver
+  	where id = #{id}
+  </delete>
+   
+</mapper>

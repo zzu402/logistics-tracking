@@ -1,0 +1,154 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>回头客物流跟踪系统</title>
+<link rel="stylesheet" href="../assets/css/bootstrap.css" />
+<link rel="stylesheet" href="../assets/css/css.css" />
+<link rel="stylesheet" href="../assets/css/dialog.css" />
+<link rel="stylesheet" href="../assets/css/pagination.css" />
+<script src="../assets/js/jquery-1.10.2.js"></script>
+<script src="../assets/js/bootstrap.min.js"></script>
+<script src="../assets/js/httpUtil.js"></script>
+<script src="../assets/js/common.js"></script>
+<script src="../assets/js/vue.js"></script>
+<script src="../assets/js/jquery.pagination.js"></script>
+<script language="javascript" type="text/javascript"
+	src="../assets/My97DatePicker/WdatePicker.js"></script>
+<style type="text/css">
+[v-cloak] {
+	display: none !important;
+}
+</style>
+</head>
+<body>
+	<div class="title_right">
+		<strong>报表统计明細</strong>
+	</div>
+	<div id="app" v-cloak>
+		<div style="width: 95%; margin: auto;">
+
+    <!-- 	<span>起始时间:</span> <input class="Wdate" type="text"
+						style="width: 120px; height: 18px; font-size: 12px;"
+						v-model="search.beginTime"
+						onClick="WdatePicker({el:this,dateFmt:'yyyy-MM-dd',onpicked:function(dp){app.search.beginTime = dp.cal.getNewDateStr()},oncleared:function(dp){app.search.beginTime='';}})">
+					    <span>结束时间:</span> <input class="Wdate"
+						type="text" style="width: 120px; height: 18px; font-size: 12px;"
+						v-model="search.endTime"
+						onClick="WdatePicker({el:this,dateFmt:'yyyy-MM-dd',onpicked:function(dp){app.search.endTime = dp.cal.getNewDateStr()},oncleared:function(dp){app.search.endTime='';}})">
+				
+						 <input style="magin-left: 5px; magin-right: 5px" type="button"
+					@click="searchReport()" value="查询" /><input type="button"  style="margin-left:2px;"
+					@click="reset()" value="重置" /></span> --> 
+			<table class="table table-bordered"  id="mtable">
+				<tr>
+					<td align="center" nowrap="nowrap" bgcolor="#f1f1f1">发货单</td>
+					<td align="center" nowrap="nowrap" bgcolor="#f1f1f1">物流单</td>
+				</tr>
+				<tr v-for="(reportDetail,index) in reportDetailList">
+					<td align="center">{{reportDetail.erpOrder}}</td>
+					<td  align="center">{{reportDetail.logisticsOrder}}</td>
+				</tr>
+			</table>
+			<div align="center">
+					<div class="m-style M-box"></div>
+			</div>
+		</div>
+	</div>
+</body>
+<script>
+var app =null;
+	$(function() {
+		app= new Vue({
+			el : '#app',
+			data : {
+				search : {
+					beginTime:"",
+					endTime:""
+				},
+				page : 1, //显示的是哪一页
+				pageSize : 20, //每一页显示的数据条数
+				total : 0, //记录总数
+				maxPage : 1, //最大页数
+				index : {},
+				reportDetailList : [],
+				isInitNav:false
+			},
+			methods : {
+				
+				searchReport : function() {
+					app.isInitNav=false;
+					app.pageHandler(1);
+				},
+				
+				reset : function() {
+					app.isInitNav=false;
+					app.search.beginTime='';
+					app.search.endTime='';
+					app.pageHandler(1);
+				},
+				
+				pageHandler : function(page) {
+					this.page = page;
+					var formData = {
+						"index":getQueryString("index"),
+						"beginTime":getQueryString("beginTime"),
+						"endTime":getQueryString("endTime"),
+						"currentPage" : page,
+						"pageSize" : this.pageSize
+					}
+					jsonPost4Json("/orderReport/getOrderReportDetailList", formData,
+							function(data, httpOptions, status) {
+								if (checkErrorDatas(data, httpOptions)) {
+									if (data.reportList) {
+										app.reportDetailList = data.reportList;
+										app.total = data.totalNum;
+										app.maxPage = Math.ceil(app.total
+												/ app.pageSize);
+										if(!app.isInitNav){
+											app.isInitNav=true;
+											if(app.total>0){
+											$('.M-box').pagination({
+										   		 totalData: app.total,
+										   		 showData:app.pageSize,
+												 count:2,
+												 coping:true,
+												 keepShowPN:true,
+										 	     callback: function (api) {
+														app.pageHandler(api.getCurrent());
+										    	 }
+											});
+										}else{
+											$('.M-box').pagination({
+												 pageCount:0,
+										   		 isHide:true,
+												 count:2,
+												 coping:true,
+												 keepShowPN:true,
+										 	     callback: function (api) {
+														app.pageHandler(api.getCurrent());
+										    	 }
+											});
+										}
+										}
+									}
+								}
+							});
+				}
+			},
+			created : function() {
+				this.pageHandler(1);
+			}
+		});
+
+	});
+
+	function getQueryString(name) {
+		var reg = new RegExp("(^|&)" + name + "=([^&]*)(&|$)", "i");
+		var r = window.location.search.substr(1).match(reg);
+		if (r != null)
+			return unescape(r[2]);
+		return null;
+	}
+</script>
+</html>
